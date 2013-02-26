@@ -7,10 +7,17 @@ import java.util.Calendar;
 import java.util.Vector;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.Align;
+import android.graphics.Paint.Style;
 import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
+import android.os.Parcelable;
 
 public class RCView extends View {
 	enum State {
@@ -48,16 +55,25 @@ public class RCView extends View {
 	private static long delayBeforeDrag = 1200; //milliseconds before hold turns to drag
 	private static final float holdingRadius = 0.5f;
 	
-
-	
 	private Delta delta = new Delta();
 	private Delta tempDelta = new Delta();
 	private Vector<Point> downPoints = new Vector<Point>();
+	
+	private Bitmap defaultBitmap = null;
+	Canvas defaultCanvas;
+	private Delta serverStatusOffset;
+	private Bitmap server_on;
+	private Bitmap server_off;
+	private Paint paint = new Paint();
+	private Paint serverStatusPaint = new Paint();
+	private boolean serverConnected = false;
 
 	public RCView(RemoteControlActivity activity) {
 		super(activity);
 		this.activity = activity;
 	}
+	
+
 	
 	/* Math.pow is slow due to having power of type double - this impl is faster */
 	private double square(double n) {
@@ -299,8 +315,39 @@ public class RCView extends View {
 		}
 	}
 	
+	/* converts dp unit to pixels for drawing */
+	private int dp(float dp) {
+		return (int)(activity.getResources().getDisplayMetrics().density * dp + 0.5f);
+	}
+	
+	private void initializeBitmap(Integer width, Integer height) {
+		defaultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+		defaultCanvas = new Canvas(defaultBitmap);
+		defaultCanvas.drawARGB(0, 9, 0, 13);
+		server_on = BitmapFactory.decodeResource(activity.getResources(), R.drawable.server_on);
+		server_off = BitmapFactory.decodeResource(activity.getResources(), R.drawable.server_off);
+		serverStatusOffset = new Delta(dp(1), dp(1));
+		defaultCanvas.drawBitmap(server_on, serverStatusOffset.x, serverStatusOffset.y, paint);
+		
+		serverStatusPaint.setColor(Color.WHITE);
+		serverStatusPaint.setStyle(Style.FILL);
+		serverStatusPaint.setTextAlign(Align.LEFT);
+		serverStatusPaint.setTextSize(20);
+		
+		defaultCanvas.drawText("server running", serverStatusOffset.x + server_on.getWidth(), serverStatusOffset.y + server_on.getHeight()/2, serverStatusPaint);
+	}
 	
 	public void onDraw(Canvas canvas) {
-		canvas.drawARGB(0, 16, 16, 255);//80
+		
+		if (defaultBitmap == null) {
+			initializeBitmap(canvas.getWidth(), canvas.getHeight());
+		}
+		if (serverConnected) {
+			defaultCanvas.drawBitmap(server_off, serverStatusOffset.x, serverStatusOffset.y, paint);
+		} else {
+			defaultCanvas.drawBitmap(server_on, serverStatusOffset.x, serverStatusOffset.y, paint);
+		}
+		canvas.drawBitmap(defaultBitmap, 0, 0, paint);
+		//canvas.drawARGB(255, 16, 16, 255);//80
 	}
 }

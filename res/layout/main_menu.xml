@@ -1,33 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/background_gradient"
-    android:orientation="vertical" >
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-       <TextView
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_gravity="center_horizontal"
-           android:layout_weight="1.0"
-           android:clickable="false"
-           android:gravity="center_horizontal"
-           android:text="REMOTE"
-           android:textStyle="bold"
-           android:typeface="serif"
-           android:textSize="40sp" >
-
-        </TextView>
-		
-    </LinearLayout>
-
-    <LinearLayout
-  	    android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-     </LinearLayout>
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@drawable/main_menu_background"
+              android:orientation="vertical" >
+	<TextView android:layout_width="wrap_content"
+           	  android:layout_height="wrap_content"
+              android:layout_gravity="center_horizontal"
+              android:clickable="false"
+           	  android:gravity="bottom|center_horizontal"
+              android:text="@string/app_name"
+              android:textStyle="bold"
+          	  android:typeface="serif"
+          	  android:textSize="40sp"
+          	  android:layout_weight="2.5" />
+	<LinearLayout android:layout_width="wrap_content"
+	    		  android:layout_height="wrap_content"
+	    		  android:layout_weight="10" />
+   	<LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:layout_weight="73.5">
+    	<ImageButton android:src="@drawable/settings_btn"
+                     android:contentDescription="@string/settings_btn_cd"
+                     android:layout_height="wrap_content"
+                     android:layout_width="wrap_content"
+                     android:background="#00000000"
+                     android:onClick="onSettingsButtonClick" />
+    	<ImageButton android:src="@drawable/remote_control_btn"
+    	             android:contentDescription="@string/remote_btn_cd"
+    	             android:layout_height="wrap_content"
+    	             android:layout_width="wrap_content"
+    	             android:background="#00000000"
+    	             android:onClick="onRemoteButtonClick" />
+  	</LinearLayout>
 </LinearLayout>

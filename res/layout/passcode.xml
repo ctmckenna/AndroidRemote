@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/passcode_background"
+    android:orientation="vertical"
+    android:weightSum="100" >
+
+	<TextView
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_horizontal"
+	    android:layout_weight="2.5"
+	    android:clickable="false"
+	    android:gravity="bottom|center_horizontal"
+	    android:text="@string/app_name"
+	    android:textSize="40sp"
+	    android:textStyle="bold"
+	    android:typeface="serif" />
+
+	<LinearLayout
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_weight="10" />
+
+   	<LinearLayout
+   	    android:layout_width="match_parent"
+   	    android:layout_height="wrap_content"
+   	    android:layout_weight="88.5"
+   	    android:orientation="vertical" >
+
+   	    <LinearLayout
+   	        android:layout_width="wrap_content"
+   	        android:layout_height="wrap_content"
+   	        android:layout_weight="50" />
+
+        <LinearLayout
+    	    android:layout_width="wrap_content"
+    	    android:layout_height="wrap_content"
+    	    android:layout_gravity="center_horizontal"
+    	    android:layout_weight="10"
+    	    android:orientation="vertical" >
+
+    		<TextView
+    		    android:layout_width="wrap_content"
+    		    android:layout_height="wrap_content"
+    		    android:layout_gravity="center_horizontal"
+    		    android:clickable="false"
+    		    android:text="Enter Passcode:"
+    		    android:textColor="#FFFFFF"
+    		    android:textSize="20sp"
+    		    android:typeface="sans" />
+
+    	    <EditText
+    	        android:layout_width="fill_parent"
+    	        android:layout_height="wrap_content"
+    	        android:layout_gravity="center_horizontal"
+    	        android:layout_weight="10"
+    	        android:gravity="center"
+    	        android:height="30sp"
+    	        android:lines="1"
+    	        android:maxLength="4"
+    	        android:textSize="30sp"
+    	        android:textStyle="normal"
+    	        android:typeface="normal"
+    	        android:digits="0123456789"
+    	        android:id="@+id/passcode"/>
+    	</LinearLayout>
+    	
+    	<RelativeLayout
+    	    android:layout_width="match_parent"
+    	    android:layout_height="wrap_content"
+    	    android:layout_weight="50">
+    	    
+    	    <ImageButton
+    	            android:layout_width="wrap_content"
+    	            android:layout_height="wrap_content"
+    	            android:contentDescription="@string/push_btn_cd"
+    	            android:layout_centerInParent="true"
+    	            android:onClick="onContinueButtonClick"
+    	            android:src="@drawable/push_btn"
+    	            android:background="#00000000" />
+    	    <TextView 
+    	        android:layout_width="wrap_content"
+    	        android:layout_height="wrap_content"
+    	        android:text="@string/continue_btn_txt"
+    	        android:clickable="false"
+    	       	android:textSize="20sp"
+    	        android:layout_centerInParent="true" />
+    	</RelativeLayout>
+
+    	<!-- <LinearLayout
+    	    android:layout_width="match_parent"
+    	    android:layout_height="wrap_content"
+    	    android:layout_weight="50"
+    	    android:orientation="horizontal" >
+
+    	    <LinearLayout
+    	        android:layout_width="match_parent"
+    	        android:layout_height="wrap_content"
+    	        android:layout_gravity="center_vertical"
+    	        android:orientation="vertical" >
+
+    	        <ImageButton
+    	            android:layout_width="wrap_content"
+    	            android:layout_height="wrap_content"
+    	            android:layout_gravity="center_horizontal"
+    	            android:onClick="onContinueButtonClick"
+    	            android:src="@drawable/push_btn"
+    	            android:background="#00000000" />
+    	    </LinearLayout>
+
+    	</LinearLayout>    	 -->
+  	</LinearLayout>
+
+</LinearLayout>
