@@ -49,7 +49,7 @@ public class MainMenuActivity extends Activity {
 	}
 	
 	public void onSettingsButtonClick(View v) {
-		//TODO: implement
+		setContentView(R.layout.passcode);
 	}
 	
 	public void onRemoteButtonClick(View v) {

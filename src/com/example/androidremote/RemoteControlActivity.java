@@ -1,32 +1,20 @@
 package com.example.androidremote;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.util.Calendar;
-import java.util.Enumeration;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.LinearLayout;
 
 public class RemoteControlActivity extends Activity {
-	private RCView trackpadView;
 	static int listenPort = 4023;
 	static int serverPort = 4023;
 	static final String pingResponse = ":-)";
-	static final String pingRequest = ":-/";
 	private NetworkService networkService;
 	private Delta deltaBuffer = new Delta();
 	DatagramBuffer sendBuffer = new DatagramBuffer();
+	private Connection connectionStatus = Connection.PENDING;
 	
 	/* data for batched movement */
 	private long lastSendTime = Calendar.getInstance().getTimeInMillis();
@@ -43,30 +31,43 @@ public class RemoteControlActivity extends Activity {
         RCView v = new RCView(this);
         v.setLayoutParams(params);
         ll.addView(v);
-        trackpadView = v;
+        //trackpadView = v;
         
-        networkService = new NetworkService(this, serverPort, pingRequest, pingResponse, new ConnectionSuccessful(), new ConnectionFailure());
+        networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
         networkService.findLanServerAddr();
     }
     
-    private class ConnectionSuccessful implements Callback {
+    private class Connect implements Callback {
     	public void callback() {
-    		System.out.println("We found that there server duuuude");
+    		connectionStatus = Connection.CONNECTED;
     	}
     }
-    private class ConnectionFailure implements Callback {
+    private class Disconnect implements Callback {
     	public void callback() {
-    		System.out.println("crap shit fuck tits motherfucker");
+    		connectionStatus = Connection.DISCONNECTED;
+    	}
+    }
+    private class Pending implements Callback {
+    	public void callback() {
+    		connectionStatus = Connection.PENDING;
     	}
     }
 	
+    public Connection getConnectionStatus() {
+    	return connectionStatus;
+    }
+    
 	public void sendEvent(RemoteEvent ev) {
+		if (connectionStatus != Connection.CONNECTED)
+			return;
 		sendBuffer.reset();
 		sendBuffer.copyByte(ev.getId());
 		networkService.send(sendBuffer);
 	}
 	
 	public void sendEvent(float x, float y, RemoteEvent ev) {
+		if (connectionStatus != Connection.CONNECTED)
+			return;
 		long now = Calendar.getInstance().getTimeInMillis();
 		switch(ev) {
 		case MOVE:
@@ -89,10 +90,5 @@ public class RemoteControlActivity extends Activity {
 		sendBuffer.copyFloat(y);
 
 		networkService.send(sendBuffer);
-	}
-
-    
-	public void checkWifiState() {
-		//TODO: implement
 	}
 }

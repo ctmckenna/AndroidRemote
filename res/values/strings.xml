@@ -9,6 +9,7 @@
 	<string name="invalid_passcode_msg">To continue, please enter 4-digit passcode from Mac Application.\n\nMac Application can be downloaded from www.g.com</string>
 	<string name="connected">connected</string>
 	<string name="disconnected">disconnected</string>
+	<string name="pendingConnection">connecting&#8230;</string>
 	
 	<!-- Content descriptions -->
 	<string name="settings_btn_cd">Click to view/edit Settings</string>

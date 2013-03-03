@@ -19,8 +19,9 @@ public class DatagramListener extends Thread {
 	}
 	
 	public void run() {
+		DatagramSocket dg = null;
 		try {
-			DatagramSocket dg = new DatagramSocket(port);
+			dg = new DatagramSocket(port);
 			DatagramPacket received = new DatagramPacket(packetBuffer, packetBuffer.length);
 			while (true) {
 				dg.receive(received);
@@ -33,6 +34,8 @@ public class DatagramListener extends Thread {
 			}
 		} catch(Exception e) {
 			Log.e(this.getClass().getName(), "Datagram failed");
+		} finally {
+			dg.close();
 		}
 	}
 }

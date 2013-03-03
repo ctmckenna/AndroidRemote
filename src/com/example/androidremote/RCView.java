@@ -1,9 +1,5 @@
 package com.example.androidremote;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.Calendar;
 import java.util.Vector;
 
 import android.content.Context;
@@ -14,40 +10,22 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Vibrator;
+import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
-import android.os.Parcelable;
 
 public class RCView extends View {
-	enum State {
-		holding,
-		dragging_1,
-		dragging_2,
-		scrolling,
-		moving,
-		empty;
-		static int holder;    /* when dragging or holding, id of pointer that initiated the event */
-	}
-	
-	private class Point {
-		Point(float x, float y, int id) {
-			origX = x;
-			curX = x;
-			origY = y;
-			curY = y;
-			this.id = id;
-		}
-		float origX;
-		float origY;
-		float curX;
-		float curY;
-		int id;
-	}
+
 	
 	private RemoteControlActivity activity;
 	
-	private static State state = State.empty;
+	private static TouchState state = TouchState.empty;
 	
 	private long delayForClick = 250;
 	private double clickRadius = 2f;
@@ -59,21 +37,28 @@ public class RCView extends View {
 	private Delta tempDelta = new Delta();
 	private Vector<Point> downPoints = new Vector<Point>();
 	
-	private Bitmap defaultBitmap = null;
-	Canvas defaultCanvas;
+	private Bitmap mainBitmap = null;
+	Canvas mainCanvas = null;
 	private Delta serverStatusOffset;
-	private Bitmap server_on;
-	private Bitmap server_off;
+	private SparseArray<Bitmap> statusBitmaps = new SparseArray<Bitmap>();
+	
 	private Paint paint = new Paint();
 	private Paint serverStatusPaint = new Paint();
-	private boolean serverConnected = false;
+	private Paint fillerPaint = new Paint();
+	
+	
+	private Drawable pointGradient = null;
+	private float pointWidth;
+	private float pointHeight;
+	
+	
+	private RefreshHandler refreshHandler = new RefreshHandler(this);
 
 	public RCView(RemoteControlActivity activity) {
 		super(activity);
 		this.activity = activity;
 	}
 	
-
 	
 	/* Math.pow is slow due to having power of type double - this impl is faster */
 	private double square(double n) {
@@ -156,18 +141,18 @@ public class RCView extends View {
 		switch(event.getActionMasked()) {
 		case MotionEvent.ACTION_DOWN:
 			/* just starts a new gesture - all state switches needs to be handled in ACTION_MOVE */
-			state = State.holding;
+			state = TouchState.holding;
 			int pointId = getNewPointId(downPoints, event);
 			downPt = new Point(event.getX(), event.getY(), pointId);
 			downPoints.add(downPt);
-			State.holder = pointId;
+			TouchState.holder = pointId;
 			return true;
 		case MotionEvent.ACTION_UP:
 			//System.out.println("up event: " + event.getPointerCount() + " pts");
 			switch(state) {
 			case holding:
-				state = State.empty;
-				State.holder = Integer.MAX_VALUE;
+				state = TouchState.empty;
+				TouchState.holder = Integer.MAX_VALUE;
 				upPt = downPoints.get(0);
 				long elapse = event.getEventTime() - event.getDownTime();
 				double dist = Math.sqrt(square(event.getY() - upPt.origY) + square(event.getX() - upPt.origX));
@@ -176,12 +161,12 @@ public class RCView extends View {
 				activity.sendEvent(RemoteEvent.CLICK);
 				break;
 			case dragging_1:
-				state = State.empty;
-				State.holder = Integer.MAX_VALUE;
+				state = TouchState.empty;
+				TouchState.holder = Integer.MAX_VALUE;
 				activity.sendEvent(RemoteEvent.UP);
 				break;
 			case moving:
-				state = State.empty;
+				state = TouchState.empty;
 				break;
 			}
 			downPoints.clear();
@@ -208,8 +193,8 @@ public class RCView extends View {
 			return true;
 		case MotionEvent.ACTION_CANCEL:
 			downPoints.clear();
-			state = State.empty;
-			State.holder = Integer.MAX_VALUE;
+			state = TouchState.empty;
+			TouchState.holder = Integer.MAX_VALUE;
 			return true;
 		}
 		return false;
@@ -224,7 +209,7 @@ public class RCView extends View {
 			activity.sendEvent(delta.x, delta.y, RemoteEvent.DRAG);
 			break;
 		case 2:
-			state = State.dragging_2;
+			state = TouchState.dragging_2;
 			int id = getNewPointId(downPoints, event);
 			int idx = event.findPointerIndex(id);
 			pt = new Point(event.getX(idx), event.getY(idx), id);
@@ -239,12 +224,12 @@ public class RCView extends View {
 		switch(event.getPointerCount()) {
 		case 1:
 			pt = removePt(downPoints, event);
-			if (pt.id == State.holder) {
-				state = State.moving;
-				State.holder = Integer.MAX_VALUE;
+			if (pt.id == TouchState.holder) {
+				state = TouchState.moving;
+				TouchState.holder = Integer.MAX_VALUE;
 				activity.sendEvent(RemoteEvent.UP);
 			} else {
-				state = State.dragging_1;
+				state = TouchState.dragging_1;
 			}
 			break;
 		case 2:
@@ -262,7 +247,7 @@ public class RCView extends View {
 			activity.sendEvent(delta.x, delta.y, RemoteEvent.MOVE);
 			break;
 		case 2:
-			state = State.scrolling;
+			state = TouchState.scrolling;
 			int id = getNewPointId(downPoints, event);
 			int idx = event.findPointerIndex(id);
 			pt = new Point(event.getX(idx), event.getY(idx), id);
@@ -280,21 +265,21 @@ public class RCView extends View {
 			long elapse = event.getEventTime() - event.getDownTime();
 			double dist = Math.sqrt(square(pt.curY - pt.origY) + square(pt.curX - pt.origX));
 			if (dist > holdingRadius) {
-				state = State.moving;
-				State.holder = Integer.MAX_VALUE;
+				state = TouchState.moving;
+				TouchState.holder = Integer.MAX_VALUE;
 				activity.sendEvent(delta.x, delta.y, RemoteEvent.MOVE);
 			} else if (elapse > delayBeforeDrag) {
 				Vibrator v = (Vibrator)activity.getSystemService(Context.VIBRATOR_SERVICE);
 				v.vibrate(100);
-				state = State.dragging_1;
+				state = TouchState.dragging_1;
 				activity.sendEvent(delta.x, delta.y, RemoteEvent.DRAG);
 			} else {
 				activity.sendEvent(delta.x, delta.y, RemoteEvent.MOVE);
 			}
 			break;
 		case 2:
-			state = State.scrolling;
-			State.holder = Integer.MAX_VALUE;
+			state = TouchState.scrolling;
+			TouchState.holder = Integer.MAX_VALUE;
 			int id = getNewPointId(downPoints, event);
 			int idx = event.findPointerIndex(id);
 			pt = new Point(event.getX(idx), event.getY(idx), id);
@@ -307,7 +292,7 @@ public class RCView extends View {
 		switch (event.getPointerCount()) {
 		case 1:
 			removePt(downPoints, event);
-			state = State.moving;
+			state = TouchState.moving;
 			break;
 		case 2:
 			/* not yet implemented */
@@ -320,34 +305,74 @@ public class RCView extends View {
 		return (int)(activity.getResources().getDisplayMetrics().density * dp + 0.5f);
 	}
 	
-	private void initializeBitmap(Integer width, Integer height) {
-		defaultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-		defaultCanvas = new Canvas(defaultBitmap);
-		defaultCanvas.drawARGB(0, 9, 0, 13);
-		server_on = BitmapFactory.decodeResource(activity.getResources(), R.drawable.server_on);
-		server_off = BitmapFactory.decodeResource(activity.getResources(), R.drawable.server_off);
-		serverStatusOffset = new Delta(dp(1), dp(1));
-		defaultCanvas.drawBitmap(server_on, serverStatusOffset.x, serverStatusOffset.y, paint);
-		
-		serverStatusPaint.setColor(Color.WHITE);
-		serverStatusPaint.setStyle(Style.FILL);
-		serverStatusPaint.setTextAlign(Align.LEFT);
-		serverStatusPaint.setTextSize(20);
-		
-		defaultCanvas.drawText("server running", serverStatusOffset.x + server_on.getWidth(), serverStatusOffset.y + server_on.getHeight()/2, serverStatusPaint);
+	private Bitmap getStatusBitmap(int statusDrawableId) {
+		Bitmap bitmap = statusBitmaps.get(statusDrawableId);
+		if (bitmap == null) {
+			bitmap = BitmapFactory.decodeResource(activity.getResources(), statusDrawableId);
+			statusBitmaps.put(statusDrawableId, bitmap);
+		}
+		return bitmap;
 	}
 	
-	public void onDraw(Canvas canvas) {
+	private void initializeBitmap(Connection connectionStatus, Integer width, Integer height) {
+		if (mainBitmap == null) {
+			mainBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+			mainCanvas = new Canvas(mainBitmap);
+			serverStatusOffset = new Delta(dp(1), dp(1));
+			
+			fillerPaint.setARGB(255, 9, 0, 13);
+			serverStatusPaint.setColor(Color.WHITE);
+			serverStatusPaint.setStyle(Style.FILL);
+			serverStatusPaint.setTextAlign(Align.LEFT);
+			serverStatusPaint.setTextSize(20);
+			
+			pointGradient = activity.getResources().getDrawable(R.drawable.point_gradient);
+			pointWidth = dp(70);
+			pointHeight = dp(70);
+
+		}
+		mainCanvas.drawARGB(255, 9, 0, 13);
+
 		
-		if (defaultBitmap == null) {
-			initializeBitmap(canvas.getWidth(), canvas.getHeight());
+		Integer statusStringId = null;
+		Bitmap statusBitmap = null;
+		
+		switch(connectionStatus) {
+		case CONNECTED:
+			statusStringId = R.string.connected;
+			statusBitmap = getStatusBitmap(R.drawable.connectedd);
+			break;
+		case DISCONNECTED:
+			statusStringId = R.string.disconnected;
+			statusBitmap = getStatusBitmap(R.drawable.disconnected);
+			break;
+		case PENDING:
+			statusStringId = R.string.pendingConnection;
+			statusBitmap = getStatusBitmap(R.drawable.pending);
+			break;
 		}
-		if (serverConnected) {
-			defaultCanvas.drawBitmap(server_off, serverStatusOffset.x, serverStatusOffset.y, paint);
-		} else {
-			defaultCanvas.drawBitmap(server_on, serverStatusOffset.x, serverStatusOffset.y, paint);
+		
+		mainCanvas.drawBitmap(statusBitmap, serverStatusOffset.x, serverStatusOffset.y, paint);
+
+		float textLeft = serverStatusOffset.x+statusBitmap.getWidth();
+		float textHeight = dp(50);
+		float textWidth = dp(100);
+		mainCanvas.drawRect(textLeft, 0, textLeft+textWidth, textHeight, fillerPaint);
+		mainCanvas.drawText(activity.getResources().getString(statusStringId), serverStatusOffset.x + statusBitmap.getWidth(), serverStatusOffset.y + statusBitmap.getHeight()/2, serverStatusPaint);
+	
+		for (int i = 0; i < downPoints.size(); ++i) {
+			Point p = downPoints.get(i);
+			pointGradient.setBounds((int)(p.curX - pointWidth/2), (int)(p.curY - pointHeight/2), (int)(p.curX + pointWidth/2), (int)(p.curY + pointHeight/2));
+			pointGradient.draw(mainCanvas);
 		}
-		canvas.drawBitmap(defaultBitmap, 0, 0, paint);
+	}
+	
+	public void onDraw(Canvas canvas) {		
+		//if (connectionStatus != this.connectionStatus || mainBitmap == null) {
+		initializeBitmap(activity.getConnectionStatus(), canvas.getWidth(), canvas.getHeight());
+
+		canvas.drawBitmap(mainBitmap, 0, 0, paint);
 		//canvas.drawARGB(255, 16, 16, 255);//80
+		refreshHandler.sleep();
 	}
 }
