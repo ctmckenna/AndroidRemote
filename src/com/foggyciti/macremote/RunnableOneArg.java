@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 public abstract class RunnableOneArg implements Runnable {
 	private Object arg;

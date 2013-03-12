@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 public interface Callback {
 	public void callback();

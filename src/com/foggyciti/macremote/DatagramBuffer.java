@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 public class DatagramBuffer {
 	private byte[] buffer = new byte[1024];

@@ -1,5 +1,6 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
+import java.util.Calendar;
 import java.util.Vector;
 
 import android.content.Context;
@@ -135,11 +136,15 @@ public class RCView extends View {
 		pt.curY = y;
 	}
 	
+	private long downMillis;
+	
 	public boolean onTouchEvent(MotionEvent event) {
 		Point downPt;
 		Point upPt;
 		switch(event.getActionMasked()) {
 		case MotionEvent.ACTION_DOWN:
+			downMillis = Calendar.getInstance().getTimeInMillis();
+			//System.out.println("action down [" + state.toString() + "]");
 			/* just starts a new gesture - all state switches needs to be handled in ACTION_MOVE */
 			state = TouchState.holding;
 			int pointId = getNewPointId(downPoints, event);
@@ -148,7 +153,9 @@ public class RCView extends View {
 			TouchState.holder = pointId;
 			return true;
 		case MotionEvent.ACTION_UP:
+			//System.out.println("action up ["+ state.toString() + "]");
 			//System.out.println("up event: " + event.getPointerCount() + " pts");
+			System.out.println((Calendar.getInstance().getTimeInMillis() - downMillis) + " millis");
 			switch(state) {
 			case holding:
 				state = TouchState.empty;
@@ -172,6 +179,7 @@ public class RCView extends View {
 			downPoints.clear();
 			return true;
 		case MotionEvent.ACTION_MOVE:
+			//System.out.println("action move [" + state.toString() + "]");
 			//System.out.println("move event: " + event.getPointerCount() + " pts");
 			switch(state) {
 			case holding:
@@ -192,6 +200,7 @@ public class RCView extends View {
 			}
 			return true;
 		case MotionEvent.ACTION_CANCEL:
+			//System.out.println("action cancel [" + state.toString() + "]");
 			downPoints.clear();
 			state = TouchState.empty;
 			TouchState.holder = Integer.MAX_VALUE;

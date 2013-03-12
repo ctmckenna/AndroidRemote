@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -12,14 +12,21 @@ public class DatagramListener extends Thread {
 	private DatagramCallback reqCallback;
 	private byte[] packetBuffer = new byte[1024];
 	
+	private boolean shouldStop = false;
+	DatagramSocket dg = null;
+	
 	public DatagramListener(Activity activity, int port, DatagramCallback reqCallback) {
 		this.port = port;
 		this.reqCallback = reqCallback;
 		this.activity = activity;
 	}
 	
+	public void kill() {
+		shouldStop = true;
+		dg.close();
+	}
+	
 	public void run() {
-		DatagramSocket dg = null;
 		try {
 			dg = new DatagramSocket(port);
 			DatagramPacket received = new DatagramPacket(packetBuffer, packetBuffer.length);
@@ -32,10 +39,6 @@ public class DatagramListener extends Thread {
 				});
 				
 			}
-		} catch(Exception e) {
-			Log.e(this.getClass().getName(), "Datagram failed");
-		} finally {
-			dg.close();
-		}
+		} catch(Exception e) {}
 	}
 }

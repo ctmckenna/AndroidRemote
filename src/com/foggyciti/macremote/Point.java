@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 public class Point {
 	Point(float x, float y, int id) {

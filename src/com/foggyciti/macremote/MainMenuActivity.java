@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 import android.app.Activity;
 import android.app.AlertDialog;

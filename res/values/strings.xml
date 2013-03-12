@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Remote</string>
+    <string name="app_name">MacRemote</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
 	<string name="continue_btn_txt">Continue</string>
 	<string name="wifi_not_connected_msg">Wifi is not connected.  Please connect to wifi network.</string>
-	<string name="invalid_passcode_msg">To continue, please enter 4-digit passcode from Mac Application.\n\nMac Application can be downloaded from www.g.com</string>
+	<string name="invalid_passcode_msg">To continue, please enter 4-digit passcode from Mac Application.\n\nMac Application can be downloaded from http://remote.foggyciti.com</string>
 	<string name="connected">connected</string>
 	<string name="disconnected">disconnected</string>
 	<string name="pendingConnection">connecting&#8230;</string>

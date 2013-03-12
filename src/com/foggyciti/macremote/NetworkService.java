@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -32,12 +32,13 @@ public class NetworkService {
 	private static final int CONNECT_TO_PENDING_UNACK = 5;
 	private static final int PENDING_TO_DISCONNECT_UNACK = 10;
 	
-	private static final int SERVER_PORT = 4023;
+	private static final int SERVER_PORT = 10265;
 	
 	private static final String PING_RESP_EXPECTED = ":-)";
 	
 	private static long lastSuccess = 0;
 	
+	private DatagramListener listener = null;
 	
 	private ScheduledThreadPoolExecutor scheduledTimer = new ScheduledThreadPoolExecutor(1);
 	private PingTimeout timeoutTask = new PingTimeout();
@@ -117,6 +118,10 @@ public class NetworkService {
 		}
 	}
 	
+	public void cleanup() {
+		listener.kill();
+	}
+	
 	public void send(DatagramBuffer sendBuffer) {
 		send(sendBuffer.toArray(), sendBuffer.length(), connectedServerAddr, SERVER_PORT);
 	}
@@ -160,7 +165,8 @@ public class NetworkService {
 		try {
 			InetAddress broadcastAddr = getBroadcastAddress();
 			
-			new DatagramListener(activity, SERVER_PORT+1, new PingResponseHandler()).start();
+			listener = new DatagramListener(activity, SERVER_PORT+1, new PingResponseHandler());
+			listener.start();
 			
 			sendPing(broadcastAddr);
 			

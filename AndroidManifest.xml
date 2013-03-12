@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.androidremote"
+    package="com.foggyciti.macremote"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -17,7 +17,7 @@
         android:label="@string/app_name"
         android:theme="@android:style/Theme.NoTitleBar" >
         <activity
-            android:name="com.example.androidremote.MainMenuActivity"
+            android:name="com.foggyciti.macremote.MainMenuActivity"
             android:label="@string/app_name"
             android:configChanges="orientation" >
             <intent-filter>

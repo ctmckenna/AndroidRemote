@@ -1,4 +1,4 @@
-package com.example.androidremote;
+package com.foggyciti.macremote;
 
 import java.util.Calendar;
 
@@ -11,7 +11,7 @@ public class RemoteControlActivity extends Activity {
 	static int listenPort = 4023;
 	static int serverPort = 4023;
 	static final String pingResponse = ":-)";
-	private NetworkService networkService;
+	private NetworkService networkService = null;
 	private Delta deltaBuffer = new Delta();
 	DatagramBuffer sendBuffer = new DatagramBuffer();
 	private Connection connectionStatus = Connection.PENDING;
@@ -33,8 +33,16 @@ public class RemoteControlActivity extends Activity {
         ll.addView(v);
         //trackpadView = v;
         
-        networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
-        networkService.findLanServerAddr();
+        if (networkService == null) {
+          networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
+          networkService.findLanServerAddr();
+        }
+    }
+    
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	networkService.cleanup();
     }
     
     private class Connect implements Callback {
