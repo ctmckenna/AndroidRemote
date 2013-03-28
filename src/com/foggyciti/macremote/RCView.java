@@ -22,17 +22,16 @@ import android.view.MotionEvent;
 import android.view.View;
 
 public class RCView extends View {
-
-	
 	private RemoteControlActivity activity;
 	
 	private static TouchState state = TouchState.empty;
 	
 	private long delayForClick = 250;
-	private double clickRadius = 2f;
+	private static long delayBeforeDrag = 1200;        // milliseconds before hold turns to drag
 	
-	private static long delayBeforeDrag = 1200; //milliseconds before hold turns to drag
-	private static final float holdingRadius = 0.5f;
+	/* distance measurements set in constructor since they're converted from dpi to pixels */
+	private double clickRadius;
+	private static float holdingRadius;
 	
 	private Delta delta = new Delta();
 	private Delta tempDelta = new Delta();
@@ -58,6 +57,8 @@ public class RCView extends View {
 	public RCView(RemoteControlActivity activity) {
 		super(activity);
 		this.activity = activity;
+		clickRadius = PixelUtil.px(activity, 4.5f);
+		holdingRadius = PixelUtil.px(activity, 6f);
 	}
 	
 	
@@ -155,7 +156,7 @@ public class RCView extends View {
 		case MotionEvent.ACTION_UP:
 			//System.out.println("action up ["+ state.toString() + "]");
 			//System.out.println("up event: " + event.getPointerCount() + " pts");
-			System.out.println((Calendar.getInstance().getTimeInMillis() - downMillis) + " millis");
+			//System.out.println((Calendar.getInstance().getTimeInMillis() - downMillis) + " millis");
 			switch(state) {
 			case holding:
 				state = TouchState.empty;
@@ -163,6 +164,7 @@ public class RCView extends View {
 				upPt = downPoints.get(0);
 				long elapse = event.getEventTime() - event.getDownTime();
 				double dist = Math.sqrt(square(event.getY() - upPt.origY) + square(event.getX() - upPt.origX));
+				System.out.println("click dist: " + dist + "lim: " + clickRadius);
 				if (dist > clickRadius || elapse > delayForClick)
 					break;
 				activity.sendEvent(RemoteEvent.CLICK);
@@ -273,6 +275,7 @@ public class RCView extends View {
 			getDelta(pt, event.getX(), event.getY(), delta);
 			long elapse = event.getEventTime() - event.getDownTime();
 			double dist = Math.sqrt(square(pt.curY - pt.origY) + square(pt.curX - pt.origX));
+			//System.out.println("drag dist: " + dist + "lim: " + holdingRadius);
 			if (dist > holdingRadius) {
 				state = TouchState.moving;
 				TouchState.holder = Integer.MAX_VALUE;
@@ -309,11 +312,6 @@ public class RCView extends View {
 		}
 	}
 	
-	/* converts dp unit to pixels for drawing */
-	private int dp(float dp) {
-		return (int)(activity.getResources().getDisplayMetrics().density * dp + 0.5f);
-	}
-	
 	private Bitmap getStatusBitmap(int statusDrawableId) {
 		Bitmap bitmap = statusBitmaps.get(statusDrawableId);
 		if (bitmap == null) {
@@ -327,7 +325,7 @@ public class RCView extends View {
 		if (mainBitmap == null) {
 			mainBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 			mainCanvas = new Canvas(mainBitmap);
-			serverStatusOffset = new Delta(dp(1), dp(1));
+			serverStatusOffset = new Delta((int)(PixelUtil.px(activity, 1) + 0.5), (int)(PixelUtil.px(activity, 1) + 0.5));
 			
 			fillerPaint.setARGB(255, 9, 0, 13);
 			serverStatusPaint.setColor(Color.WHITE);
@@ -336,8 +334,8 @@ public class RCView extends View {
 			serverStatusPaint.setTextSize(20);
 			
 			pointGradient = activity.getResources().getDrawable(R.drawable.point_gradient);
-			pointWidth = dp(70);
-			pointHeight = dp(70);
+			pointWidth = PixelUtil.px(activity, 70);
+			pointHeight = PixelUtil.px(activity, 70);
 
 		}
 		mainCanvas.drawARGB(255, 9, 0, 13);
@@ -364,8 +362,8 @@ public class RCView extends View {
 		mainCanvas.drawBitmap(statusBitmap, serverStatusOffset.x, serverStatusOffset.y, paint);
 
 		float textLeft = serverStatusOffset.x+statusBitmap.getWidth();
-		float textHeight = dp(50);
-		float textWidth = dp(100);
+		float textHeight = PixelUtil.px(activity, 50);
+		float textWidth = PixelUtil.px(activity, 100);
 		mainCanvas.drawRect(textLeft, 0, textLeft+textWidth, textHeight, fillerPaint);
 		mainCanvas.drawText(activity.getResources().getString(statusStringId), serverStatusOffset.x + statusBitmap.getWidth(), serverStatusOffset.y + statusBitmap.getHeight()/2, serverStatusPaint);
 	

@@ -94,8 +94,8 @@ public class RemoteControlActivity extends Activity {
 		if (x == 0 && y == 0) return;
 		sendBuffer.reset();
 		sendBuffer.copyByte(ev.getId());
-		sendBuffer.copyFloat(x);
-		sendBuffer.copyFloat(y);
+		sendBuffer.copyFloat(PixelUtil.dp(this, x));
+		sendBuffer.copyFloat(PixelUtil.dp(this, y));
 
 		networkService.send(sendBuffer);
 	}

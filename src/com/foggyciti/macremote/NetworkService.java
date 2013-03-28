@@ -1,10 +1,12 @@
 package com.foggyciti.macremote;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.Enumeration;
@@ -24,8 +26,8 @@ public class NetworkService {
 	private Callback onDisconnect;
 	private Callback onPending;
 	private Activity activity;
-	private DatagramSocket socket = null;
 	private DatagramBuffer pingBuffer = new DatagramBuffer();
+
 	
 	private static final int MILLIS_BEFORE_PING = 3000;
 	private static final int MILLIS_BEFORE_PING_RETRY = 500;
@@ -55,11 +57,7 @@ public class NetworkService {
 		pingBuffer.reset();
 		pingBuffer.copyByte(RemoteEvent.PING.getId());
 		pingBuffer.copyData(pingRequest.getBytes());
-		try {
-			socket = new DatagramSocket();
-		} catch(Exception ex) {
-			onDisconnect.callback();
-		}
+
 	}
 	
 	private class PingRetryRunnable implements Runnable {
@@ -109,12 +107,26 @@ public class NetworkService {
 		}
 	}
 	
-	private void send(byte[] buf, int buf_len, InetAddress address, int port) {
-		try {
-			DatagramPacket sendPacket = new DatagramPacket(buf, buf_len, address, port);
-			socket.send(sendPacket);
-		} catch(Exception ex) {
-			onDisconnect.callback();
+	private static class SendThread extends Thread {
+		private static DatagramPacket sendPacket = new DatagramPacket(new byte[1024], 1024);
+		private static DatagramSocket socket = null;
+		static {
+			try {
+				socket = new DatagramSocket();
+			} catch (IOException ex) {}
+		}
+		
+		public SendThread(byte[] buf, int buf_len, InetAddress address, int port) {
+			sendPacket.setData(buf);
+			sendPacket.setLength(buf_len);
+			sendPacket.setAddress(address);
+			sendPacket.setPort(port);			
+		}
+
+		public void run() {
+			try {
+				socket.send(sendPacket);
+			} catch(Exception ex) {}
 		}
 	}
 	
@@ -123,13 +135,13 @@ public class NetworkService {
 	}
 	
 	public void send(DatagramBuffer sendBuffer) {
-		send(sendBuffer.toArray(), sendBuffer.length(), connectedServerAddr, SERVER_PORT);
+		new SendThread(sendBuffer.toArray(), sendBuffer.length(), connectedServerAddr, SERVER_PORT).start();
 	}
 	
 	/* two possible addresses for ping request */
 	private void sendPing(InetAddress addr) {
 		scheduledTimer.schedule(timeoutTask, MILLIS_BEFORE_PING_RETRY, TimeUnit.MILLISECONDS);
-		send(pingBuffer.toArray(), pingBuffer.length(), addr, SERVER_PORT);
+		new SendThread(pingBuffer.toArray(), pingBuffer.length(), addr, SERVER_PORT).start();
 	}
 	
 	private byte[] intToByteArray(int integer) {
