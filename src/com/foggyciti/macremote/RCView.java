@@ -51,6 +51,8 @@ public class RCView extends View {
 	private float pointWidth;
 	private float pointHeight;
 	
+	private long holdingStartTime;
+	
 	
 	private RefreshHandler refreshHandler = new RefreshHandler(this);
 
@@ -145,16 +147,17 @@ public class RCView extends View {
 		switch(event.getActionMasked()) {
 		case MotionEvent.ACTION_DOWN:
 			downMillis = Calendar.getInstance().getTimeInMillis();
-			//System.out.println("action down [" + state.toString() + "]");
+			System.out.println("action down [" + state.toString() + "]");
 			/* just starts a new gesture - all state switches needs to be handled in ACTION_MOVE */
 			state = TouchState.holding;
+			holdingStartTime = downMillis;
 			int pointId = getNewPointId(downPoints, event);
 			downPt = new Point(event.getX(), event.getY(), pointId);
 			downPoints.add(downPt);
 			TouchState.holder = pointId;
 			return true;
 		case MotionEvent.ACTION_UP:
-			//System.out.println("action up ["+ state.toString() + "]");
+			System.out.println("action up ["+ state.toString() + "]");
 			//System.out.println("up event: " + event.getPointerCount() + " pts");
 			//System.out.println((Calendar.getInstance().getTimeInMillis() - downMillis) + " millis");
 			switch(state) {
@@ -164,7 +167,7 @@ public class RCView extends View {
 				upPt = downPoints.get(0);
 				long elapse = event.getEventTime() - event.getDownTime();
 				double dist = Math.sqrt(square(event.getY() - upPt.origY) + square(event.getX() - upPt.origX));
-				System.out.println("click dist: " + dist + "lim: " + clickRadius);
+				//System.out.println("click dist: " + dist + "lim: " + clickRadius);
 				if (dist > clickRadius || elapse > delayForClick)
 					break;
 				activity.sendEvent(RemoteEvent.CLICK);
@@ -181,7 +184,7 @@ public class RCView extends View {
 			downPoints.clear();
 			return true;
 		case MotionEvent.ACTION_MOVE:
-			//System.out.println("action move [" + state.toString() + "]");
+			System.out.println("action move [" + state.toString() + "]");
 			//System.out.println("move event: " + event.getPointerCount() + " pts");
 			switch(state) {
 			case holding:
@@ -202,7 +205,7 @@ public class RCView extends View {
 			}
 			return true;
 		case MotionEvent.ACTION_CANCEL:
-			//System.out.println("action cancel [" + state.toString() + "]");
+			System.out.println("action cancel [" + state.toString() + "]");
 			downPoints.clear();
 			state = TouchState.empty;
 			TouchState.holder = Integer.MAX_VALUE;
@@ -267,6 +270,13 @@ public class RCView extends View {
 		}
 	}
 	
+	private void set_state_dragging_1() {
+		Vibrator v = (Vibrator)activity.getSystemService(Context.VIBRATOR_SERVICE);
+		v.vibrate(100);
+		state = TouchState.dragging_1;
+		activity.sendEvent(delta.x, delta.y, RemoteEvent.DRAG);
+	}
+	
 	private void handle_holding(MotionEvent event) {
 		Point pt;
 		switch(event.getPointerCount()) {
@@ -275,16 +285,13 @@ public class RCView extends View {
 			getDelta(pt, event.getX(), event.getY(), delta);
 			long elapse = event.getEventTime() - event.getDownTime();
 			double dist = Math.sqrt(square(pt.curY - pt.origY) + square(pt.curX - pt.origX));
-			//System.out.println("drag dist: " + dist + "lim: " + holdingRadius);
+			//System.out.println("elapse: " + elapse + " drag dist: " + dist);
 			if (dist > holdingRadius) {
 				state = TouchState.moving;
 				TouchState.holder = Integer.MAX_VALUE;
 				activity.sendEvent(delta.x, delta.y, RemoteEvent.MOVE);
 			} else if (elapse > delayBeforeDrag) {
-				Vibrator v = (Vibrator)activity.getSystemService(Context.VIBRATOR_SERVICE);
-				v.vibrate(100);
-				state = TouchState.dragging_1;
-				activity.sendEvent(delta.x, delta.y, RemoteEvent.DRAG);
+				set_state_dragging_1();
 			} else {
 				activity.sendEvent(delta.x, delta.y, RemoteEvent.MOVE);
 			}
@@ -379,6 +386,10 @@ public class RCView extends View {
 		initializeBitmap(activity.getConnectionStatus(), canvas.getWidth(), canvas.getHeight());
 
 		canvas.drawBitmap(mainBitmap, 0, 0, paint);
+		
+		if (state == TouchState.holding && Calendar.getInstance().getTimeInMillis() - holdingStartTime > delayBeforeDrag) {
+			set_state_dragging_1();
+		}
 		//canvas.drawARGB(255, 16, 16, 255);//80
 		refreshHandler.sleep();
 	}

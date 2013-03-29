@@ -25,7 +25,6 @@ public class RemoteControlActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
         setContentView(R.layout.main);
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         LinearLayout ll = (LinearLayout)findViewById(R.id.layout);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT);
         RCView v = new RCView(this);
@@ -96,7 +95,7 @@ public class RemoteControlActivity extends Activity {
 		sendBuffer.copyByte(ev.getId());
 		sendBuffer.copyFloat(PixelUtil.dp(this, x));
 		sendBuffer.copyFloat(PixelUtil.dp(this, y));
-
+		sendBuffer.copyInt((int)now);
 		networkService.send(sendBuffer);
 	}
 }
