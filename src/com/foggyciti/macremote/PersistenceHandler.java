@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 public class PersistenceHandler {
 	private static final String PREFS_NAME="DefaultPrefs";
 	
-	private static final String passcodeKey = "pingPasscode";
+	private static final String passcodeKey = "@string/passcodeKey";
 
 	private static SharedPreferences.Editor getEditor(Context c, String name) {
 		return c.getSharedPreferences(name, Context.MODE_PRIVATE).edit();

@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/passcode_background"
     android:orientation="vertical"
+    android:id="@+id/passcode_ll"
     android:weightSum="100" >
 
 	<TextView
@@ -46,7 +47,7 @@
     		    android:layout_height="wrap_content"
     		    android:layout_gravity="center_horizontal"
     		    android:clickable="false"
-    		    android:text="Enter Passcode:"
+    		    android:text="@string/enter_passcode"
     		    android:textColor="#FFFFFF"
     		    android:textSize="20sp"
     		    android:typeface="sans" />
@@ -54,6 +55,7 @@
     	    <EditText
     	        android:layout_width="fill_parent"
     	        android:layout_height="wrap_content"
+    	        android:inputType="number"
     	        android:layout_gravity="center_horizontal"
     	        android:layout_weight="10"
     	        android:gravity="center"

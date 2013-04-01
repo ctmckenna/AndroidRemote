@@ -3,7 +3,6 @@ package com.foggyciti.macremote;
 import java.util.Calendar;
 
 import android.app.Activity;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 

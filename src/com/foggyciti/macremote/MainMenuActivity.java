@@ -6,12 +6,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.graphics.Point;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.view.Display;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 
 /* controls view for entering passcode and for main menu */
 public class MainMenuActivity extends Activity {
@@ -22,9 +23,26 @@ public class MainMenuActivity extends Activity {
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		String passcode = PersistenceHandler.getPasscode(this);
 		if (null == passcode)
-			setContentView(R.layout.passcode);
+			startPasscodeInitialization();
 		else
 			startMainMenu();
+	}
+	
+	private void startPasscodeInitialization() {
+		setContentView(R.layout.passcode);
+		LinearLayout ll = (LinearLayout)findViewById(R.id.passcode_ll);
+		ll.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				EditText passcodeInput = (EditText)findViewById(R.id.passcode);
+				if (passcodeInput.isFocused()) {
+					passcodeInput.clearFocus();
+					InputMethodManager imm = (InputMethodManager)v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+					imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+				}
+				return false;
+			}
+		});
 	}
 	
 	private void startMainMenu() {
@@ -49,7 +67,8 @@ public class MainMenuActivity extends Activity {
 	}
 	
 	public void onSettingsButtonClick(View v) {
-		setContentView(R.layout.passcode);
+		Intent intent = new Intent(this, SettingsActivity.class);
+		startActivity(intent);
 	}
 	
 	public void onRemoteButtonClick(View v) {

@@ -4,7 +4,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 import android.app.Activity;
-import android.util.Log;
 
 public class DatagramListener extends Thread {
 	private Activity activity;                     /* so we can run callback on ui thread */
@@ -12,7 +11,6 @@ public class DatagramListener extends Thread {
 	private DatagramCallback reqCallback;
 	private byte[] packetBuffer = new byte[1024];
 	
-	private boolean shouldStop = false;
 	DatagramSocket dg = null;
 	
 	public DatagramListener(Activity activity, int port, DatagramCallback reqCallback) {
@@ -22,7 +20,6 @@ public class DatagramListener extends Thread {
 	}
 	
 	public void kill() {
-		shouldStop = true;
 		dg.close();
 	}
 	

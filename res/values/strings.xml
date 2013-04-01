@@ -6,14 +6,21 @@
     <string name="hello_world">Hello world!</string>
 	<string name="continue_btn_txt">Continue</string>
 	<string name="wifi_not_connected_msg">Wifi is not connected.  Please connect to wifi network.</string>
-	<string name="invalid_passcode_msg">To continue, please enter 4-digit passcode from Mac Application.\n\nMac Application can be downloaded from http://remote.foggyciti.com</string>
+	<string name="invalid_passcode_msg">To continue, please enter 4-digit passcode from Mac Application.\n\nMac Application can be downloaded from http://foggyciti.com/remote</string>
 	<string name="connected">connected</string>
 	<string name="disconnected">disconnected</string>
 	<string name="pendingConnection">connecting&#8230;</string>
+	<string name="enter_passcode">Enter Passcode:</string>
+	<string name="passcodeDisplay">Passcode</string>
+	<string name="passcodeSummary">Change passcode used to connect to Mac</string>
 	
 	<!-- Content descriptions -->
 	<string name="settings_btn_cd">Click to view/edit Settings</string>
     <string name="remote_btn_cd">Click to use Remote</string>
 	<string name="question_btn_cd">Click for Help</string>
 	<string name="push_btn_cd">Click to Continue</string>
+	
+	<!-- System strings (should not be translated) -->
+	<string name="passcodeKey">passcodeKey</string>
+	<!-- System strings -->
 </resources>
