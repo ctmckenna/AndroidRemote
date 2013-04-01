@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <EditTextPreference 
+        android:id="@+id/passcodePreference"
         android:key="@string/passcodeKey"
         android:title="@string/passcodeDisplay"
-        android:summary="@string/passcodeSummary"/>
+        android:summary="@string/passcodeSummary"
+        android:digits="0123456789"
+        android:inputType="number"
+        android:height="30sp"
+        android:gravity="center" 
+    	android:lines="1"
+    	android:maxLength="4"
+    	android:textSize="30sp"
+    	android:textStyle="normal"
+    	android:typeface="normal"
+        />
 
 </PreferenceScreen>
