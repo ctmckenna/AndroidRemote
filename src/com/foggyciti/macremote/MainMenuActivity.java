@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 /* controls view for entering passcode and for main menu */
@@ -42,6 +43,23 @@ public class MainMenuActivity extends Activity {
 				}
 				return false;
 			}
+		});
+		ImageButton continueButton = (ImageButton)findViewById(R.id.continue_button);
+		continueButton.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				ImageButton b = (ImageButton)v;
+				switch(event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+					b.setImageDrawable(v.getContext().getResources().getDrawable(R.drawable.pressed));
+					break;
+				case MotionEvent.ACTION_UP:
+					b.setImageDrawable(v.getContext().getResources().getDrawable(R.drawable.hover));
+					break;
+				}
+				return false;
+			}
+			
 		});
 	}
 	

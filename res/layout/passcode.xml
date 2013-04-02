@@ -39,7 +39,7 @@
     	    android:layout_width="wrap_content"
     	    android:layout_height="wrap_content"
     	    android:layout_gravity="center_horizontal"
-    	    android:layout_weight="10"
+    	    android:layout_weight="60"
     	    android:orientation="vertical" >
 
     		<TextView
@@ -67,29 +67,20 @@
     	        android:typeface="normal"
     	        android:digits="0123456789"
     	        android:id="@+id/passcode"/>
-    	</LinearLayout>
-    	
-    	<RelativeLayout
-    	    android:layout_width="match_parent"
-    	    android:layout_height="wrap_content"
-    	    android:layout_weight="50">
     	    
     	    <ImageButton
-    	            android:layout_width="wrap_content"
-    	            android:layout_height="wrap_content"
-    	            android:contentDescription="@string/push_btn_cd"
-    	            android:layout_centerInParent="true"
-    	            android:onClick="onContinueButtonClick"
-    	            android:src="@drawable/push_btn"
-    	            android:background="#00000000" />
-    	    <TextView 
-    	        android:layout_width="wrap_content"
-    	        android:layout_height="wrap_content"
-    	        android:text="@string/continue_btn_txt"
-    	        android:clickable="false"
-    	       	android:textSize="20sp"
-    	        android:layout_centerInParent="true" />
-    	</RelativeLayout>
+    	        android:id="@+id/continue_button"
+    			android:layout_width="wrap_content"
+    	       	android:layout_height="wrap_content"
+    	       	android:layout_gravity="center_horizontal"
+    	      	android:layout_weight="50"
+    	      	android:contentDescription="@string/push_btn_cd"
+    	      	android:onClick="onContinueButtonClick"
+    	      	android:src="@drawable/hover"
+    	      	android:background="#00000000" />
+    	</LinearLayout>
+    	    
+    	
 
     	<!-- <LinearLayout
     	    android:layout_width="match_parent"
