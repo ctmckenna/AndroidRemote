@@ -24,10 +24,10 @@ public class MainMenuActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		String passcode = PersistenceHandler.getPasscode(this);
-		//if (null == passcode)
+		if (null == passcode)
 			startPasscodeInitialization();
-		//else
-		//	startMainMenu();
+		else
+			startMainMenu();
 	}
 	
 	private void startPasscodeInitialization() {
