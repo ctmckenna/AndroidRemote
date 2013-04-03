@@ -1,6 +1,5 @@
 package com.foggyciti.macremote;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;

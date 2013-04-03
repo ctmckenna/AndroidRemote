@@ -1,5 +1,6 @@
 package com.foggyciti.macremote;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -23,16 +24,17 @@ public class MainMenuActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		String passcode = PersistenceHandler.getPasscode(this);
-		if (null == passcode)
+		//if (null == passcode)
 			startPasscodeInitialization();
-		else
-			startMainMenu();
+		//else
+		//	startMainMenu();
 	}
 	
 	private void startPasscodeInitialization() {
 		setContentView(R.layout.passcode);
 		LinearLayout ll = (LinearLayout)findViewById(R.id.passcode_ll);
 		ll.setOnTouchListener(new View.OnTouchListener() {
+			@SuppressLint("NewApi")
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				EditText passcodeInput = (EditText)findViewById(R.id.passcode);

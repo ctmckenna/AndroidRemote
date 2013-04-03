@@ -42,12 +42,9 @@ public class RCView extends View {
 	private Paint serverStatusPaint = new Paint();
 	private Paint fillerPaint = new Paint();
 	
-	
 	private Drawable pointGradient = null;
 	private float pointWidth;
 	private float pointHeight;
-	
-	private long holdingStartTime;
 	
 	
 	private RefreshHandler refreshHandler = new RefreshHandler(this);
@@ -135,18 +132,58 @@ public class RCView extends View {
 		pt.curY = y;
 	}
 	
-	private long downMillis;
+	private long downTime;
+	private long lastTouchEvent;
+	
+	/* some android api versions don't continue to send MotionEvents when no pointers move,
+	 * so there's an issue where (given two pointers) you lift one up and move it elsewhere, android
+	 * will only send events while it's down and we miss that the pointer is off the screen
+	 */
+	private void correctDownPoints(MotionEvent event, Vector<Point> downPoints, long currentTimeInMillis) {
+		long acceptedMillisBetweenEvents = 200;
+		double acceptedPixelsBetweenEvents = PixelUtil.px(activity, 20f);
+		//if we haven't received an event in some time, and one of the pointers moved beyond acceptedPixelsBetweenEvents, 
+		//we assume it's been lifted and placed back down so we remove that downPoint to pretend like we noticed it was lifted
+		if (state == TouchState.dragging_2 && downPoints.size() == event.getPointerCount() && currentTimeInMillis - lastTouchEvent > acceptedMillisBetweenEvents) {
+			for (int j = 0; j < downPoints.size(); ++j) {
+				Point point = downPoints.get(j);
+				for (int i = 0; i < event.getPointerCount(); ++i) {
+					if (point.id == event.getPointerId(i)) {
+						tempDelta.x = point.curX - event.getX(i);
+						tempDelta.y = point.curY - event.getY(i);
+						if (getDistance(tempDelta) > acceptedPixelsBetweenEvents) {
+							downPoints.remove(j);
+							correctState(downPoints.size());
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private void correctState(int numPointers) {
+		switch(state) {
+		case dragging_2:
+			if (numPointers == 1)
+				state = TouchState.dragging_1;
+			break;
+		default:
+			break;
+		}
+	}
 	
 	public boolean onTouchEvent(MotionEvent event) {
 		Point downPt;
 		Point upPt;
+		long currentTime = Calendar.getInstance().getTimeInMillis();
+		correctDownPoints(event, downPoints, currentTime);
+		lastTouchEvent = currentTime;
 		switch(event.getActionMasked()) {
 		case MotionEvent.ACTION_DOWN:
-			downMillis = Calendar.getInstance().getTimeInMillis();
+			downTime = Calendar.getInstance().getTimeInMillis();
 			System.out.println("action down [" + state.toString() + "]");
 			/* just starts a new gesture - all state switches needs to be handled in ACTION_MOVE */
 			state = TouchState.holding;
-			holdingStartTime = downMillis;
 			int pointId = getNewPointId(downPoints, event);
 			downPt = new Point(event.getX(), event.getY(), pointId);
 			downPoints.add(downPt);
@@ -379,13 +416,13 @@ public class RCView extends View {
 	
 	public void onDraw(Canvas canvas) {		
 		//if (connectionStatus != this.connectionStatus || mainBitmap == null) {
+		if (state == TouchState.holding && Calendar.getInstance().getTimeInMillis() - downTime > delayBeforeDrag)
+			set_state_dragging_1();
+		
 		initializeBitmap(activity.getConnectionStatus(), canvas.getWidth(), canvas.getHeight());
 
 		canvas.drawBitmap(mainBitmap, 0, 0, paint);
 		
-		if (state == TouchState.holding && Calendar.getInstance().getTimeInMillis() - holdingStartTime > delayBeforeDrag) {
-			set_state_dragging_1();
-		}
 		//canvas.drawARGB(255, 16, 16, 255);//80
 		refreshHandler.sleep();
 	}
