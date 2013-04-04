@@ -71,7 +71,7 @@ public class NetworkService {
 			try {
 				InetAddress pingAddr;
 				if (connectedServerAddr == null)
-					pingAddr = getBroadcastAddress();
+					pingAddr = BroadcastHandler.getInstance(activity).getBroadcastAddress();
 				else
 					pingAddr = connectedServerAddr;
 				sendPing(pingAddr);
@@ -128,7 +128,8 @@ public class NetworkService {
 	}
 	
 	public void cleanup() {
-		listener.kill();
+		if (listener != null)
+			listener.kill();
 	}
 	
 	public void send(DatagramBuffer sendBuffer) {
@@ -141,7 +142,7 @@ public class NetworkService {
 		new SendThread(pingBuffer.toArray(), pingBuffer.length(), addr, SERVER_PORT).start();
 	}
 	
-	private byte[] intToByteArray(int integer) {
+	public static byte[] intToByteArray(int integer) {
 		byte[] byteArr = new byte[4];
 		for (int i = 0; i < 4; i++) {
 			byteArr[i] = (byte)(integer >>> (8 * i) & 0xFF);
@@ -149,30 +150,52 @@ public class NetworkService {
 		return byteArr;
 	}
 	
-	private InetAddress getWifiAddress() throws UnknownHostException {
-		WifiManager wifiManager = (WifiManager)activity.getSystemService(Context.WIFI_SERVICE);
-		WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-		Integer wifiIp = wifiInfo.getIpAddress();
-		return InetAddress.getByAddress(intToByteArray(wifiIp));
+	public static int byteArrayToInt(byte[] bytes) {
+		int result = 0;
+		if (bytes.length != 4)
+			return -1;
+		for (int i = 0; i < 4; i++) {
+			result |= ((int)bytes[3-i]) << i;
+		}
+		return result;
 	}
 	
-	private InetAddress getBroadcastAddress() throws Exception {
-		InetAddress wifiAddress = getWifiAddress();
-		for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-			NetworkInterface intf = en.nextElement();
-			if (intf.isLoopback()) continue;
-			for (InterfaceAddress intfAddr : intf.getInterfaceAddresses()) {
-				if (wifiAddress.equals(intfAddr.getAddress())) {
-					return intfAddr.getBroadcast();
-				}
-			}
+	public static InetAddress getWifiAddress(Context c) throws UnknownHostException {
+		WifiManager wifiManager = (WifiManager)c.getSystemService(Context.WIFI_SERVICE);
+		WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+		Integer wifiIp = wifiInfo.getIpAddress();
+		return InetAddress.getByAddress(NetworkService.intToByteArray(wifiIp));
+	}
+	
+	public static byte[] getNetmask(Context c) {
+		byte[] netmask = new byte[4];
+		int m = ((WifiManager)c.getSystemService(Context.WIFI_SERVICE)).getDhcpInfo().netmask;
+		for (int i = 0; i < 4; ++i) {
+			netmask[i] = (byte)((m >>> i * 8) & 0xFF);
 		}
-		return null;
+		return netmask;
+	}
+	
+	public static byte[] orOperation(byte[] b1, byte[] b2) {
+		byte[] or = new byte[b1.length];
+		if (b1.length != b2.length)
+			return null;
+		for (int i = 0; i < or.length; ++i) {
+			or[i] = (byte)(b1[i] | b2[i]);
+		}
+		return or;
+	}
+	
+	public static byte[] inverseOperation(byte[] b) {
+		for (int i = 0; i < b.length; ++i) {
+			b[i] = (byte)~b[i];
+		}
+		return b;
 	}
 	
 	public InetAddress findLanServerAddr() {
 		try {
-			InetAddress broadcastAddr = getBroadcastAddress();
+			InetAddress broadcastAddr = BroadcastHandler.getInstance(activity).getBroadcastAddress();
 			
 			listener = new DatagramListener(activity, SERVER_PORT+1, new PingResponseHandler());
 			listener.start();

@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -19,6 +20,7 @@ import android.widget.LinearLayout;
 /* controls view for entering passcode and for main menu */
 public class MainMenuActivity extends Activity {
 	private static final Integer PASSCODE_LEN = 4;
+	private boolean alertedWifi = false;
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -30,11 +32,14 @@ public class MainMenuActivity extends Activity {
 			startMainMenu();
 	}
 	
+	private WifiManager getWifiManager() {
+		return (WifiManager)getSystemService(Context.WIFI_SERVICE);
+	}
+	
 	private void startPasscodeInitialization() {
 		setContentView(R.layout.passcode);
 		LinearLayout ll = (LinearLayout)findViewById(R.id.passcode_ll);
 		ll.setOnTouchListener(new View.OnTouchListener() {
-			@SuppressLint("NewApi")
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				EditText passcodeInput = (EditText)findViewById(R.id.passcode);
@@ -63,22 +68,33 @@ public class MainMenuActivity extends Activity {
 			}
 			
 		});
+		Handler handler = new Handler();
+		handler.postDelayed(new Runnable() {
+			public void run() {
+				displayPasscodeDialog();
+			}
+		}, 1200);
+	}
+	
+	private void displayWifiDialog() {
+		alertedWifi = true;
+		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+		alertDialogBuilder.setMessage(R.string.wifi_not_connected_msg);
+		alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				openWirelessSettings();
+			}
+		});
+		alertDialogBuilder.create().show();
 	}
 	
 	private void startMainMenu() {
 		setContentView(R.layout.main_menu);
 		
-		boolean wifiSet = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(true);
+		boolean wifiSet = getWifiManager().setWifiEnabled(true);
 		if (!wifiSet) {
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-			alertDialogBuilder.setMessage(R.string.wifi_not_connected_msg);
-			alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					openWirelessSettings();
-				}
-			});
-			alertDialogBuilder.create().show();
+			displayWifiDialog();
 		}
 	}
 	
@@ -92,18 +108,26 @@ public class MainMenuActivity extends Activity {
 	}
 	
 	public void onRemoteButtonClick(View v) {
+		if (!alertedWifi && WifiManager.WIFI_STATE_ENABLED != getWifiManager().getWifiState()) {
+			displayWifiDialog();
+			return;
+		}
 		Intent intent = new Intent(this, RemoteControlActivity.class);
 		startActivity(intent);
+	}
+	
+	private void displayPasscodeDialog() {
+		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+		alertDialogBuilder.setMessage(R.string.passcode_info_msg);
+		alertDialogBuilder.setPositiveButton("OK", null);
+		alertDialogBuilder.create().show();
 	}
 	
 	public void onContinueButtonClick(View v) {
 		EditText txt = (EditText)findViewById(R.id.passcode);
 		String passcode = txt.getText().toString();
 		if (passcode.length() != PASSCODE_LEN) {
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-			alertDialogBuilder.setMessage(R.string.invalid_passcode_msg);
-			alertDialogBuilder.setPositiveButton("OK", null);
-			alertDialogBuilder.create().show();
+			displayPasscodeDialog();
 		} else {
 			PersistenceHandler.savePasscode(this, passcode);
 			startMainMenu();
