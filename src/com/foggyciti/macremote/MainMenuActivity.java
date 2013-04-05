@@ -1,6 +1,5 @@
 package com.foggyciti.macremote;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -78,15 +77,11 @@ public class MainMenuActivity extends Activity {
 	
 	private void displayWifiDialog() {
 		alertedWifi = true;
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-		alertDialogBuilder.setMessage(R.string.wifi_not_connected_msg);
-		alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
+		DialogService.displaySingleOptionDialog(this, R.string.wifi_not_connected_msg, R.string.OK, new Callback() {
+			public void callback() {
 				openWirelessSettings();
 			}
 		});
-		alertDialogBuilder.create().show();
 	}
 	
 	private void startMainMenu() {
@@ -112,15 +107,17 @@ public class MainMenuActivity extends Activity {
 			displayWifiDialog();
 			return;
 		}
-		Intent intent = new Intent(this, RemoteControlActivity.class);
-		startActivity(intent);
+		if (PersistenceHandler.isSuperuser(this)) {
+			Intent intent = new Intent(this, DebugRemoteControlActivity.class);
+			startActivity(intent);
+		} else {
+			Intent intent = new Intent(this, RemoteControlActivity.class);
+			startActivity(intent);
+		}
 	}
 	
 	private void displayPasscodeDialog() {
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-		alertDialogBuilder.setMessage(R.string.passcode_info_msg);
-		alertDialogBuilder.setPositiveButton("OK", null);
-		alertDialogBuilder.create().show();
+		DialogService.displaySingleOptionDialog(this, R.string.passcode_info_msg, R.string.OK, null);
 	}
 	
 	public void onContinueButtonClick(View v) {

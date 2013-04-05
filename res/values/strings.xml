@@ -4,7 +4,6 @@
     <string name="app_name">MacRemote</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-	<string name="continue_btn_txt">Continue</string>
 	<string name="wifi_not_connected_msg">Wifi is not connected.  Please connect to wifi network.</string>
 	<string name="passcode_info_msg">To continue, please enter 4-digit passcode from Mac Application.\n\nMac Application can be downloaded from http://foggyciti.com/remote</string>
 	<string name="connected">connected</string>
@@ -13,14 +12,28 @@
 	<string name="enter_passcode">Enter Passcode:</string>
 	<string name="passcodeDisplay">Passcode</string>
 	<string name="passcodeSummary">Change passcode used to connect to Mac</string>
+	<string name="OK">OK</string>
+	<string name="NA">NA</string>
+	
 	
 	<!-- Content descriptions -->
 	<string name="settings_btn_cd">Click to view/edit Settings</string>
     <string name="remote_btn_cd">Click to use Remote</string>
-	<string name="question_btn_cd">Click for Help</string>
 	<string name="push_btn_cd">Click to Continue</string>
+	
+	
+	<!-- Debug remote layout strings (should not be translated) -->
+	<string name="becomeSuperUserMsg">Welcome!\nYou\'ve just unlocked MacRemote. Happy Debugging!</string>
+	<string name="exitSuperUserMsg">You\'ve just left the unlocked version.\nHope you found your bug!</string>
+	<string name="broadcast_address">broadcast addr: </string>
+	<string name="netmask">netmask: </string>
+	<string name="received_ping">last ping: </string>
+	<string name="expected_ping">expected ping: </string>
+	<string name="connection_status">connection status: </string>
+	<string name="response_ip">response IP: </string>
+	<string name="pings_sent">pings sent: </string>
 	
 	<!-- System strings (should not be translated) -->
 	<string name="passcodeKey">passcodeKey</string>
-	<!-- System strings -->
+	
 </resources>

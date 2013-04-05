@@ -44,6 +44,10 @@ public class NetworkService {
 	
 	private PingRetryRunnable pingRetry = new PingRetryRunnable();
 	
+	private String lastPingResponse = null;
+	private InetAddress lastAddrResponse = null;
+	private int totalPingsSent = 0;
+	
 	private int unackPings = 0;
 	
 	public NetworkService(Activity activity, String pingRequest, Callback onConnect, Callback onDisconnect, Callback onPending) {
@@ -85,6 +89,8 @@ public class NetworkService {
 		@Override
 		public void callback(DatagramPacket packet) {
 			String msg = new String(packet.getData(), 0, packet.getLength());
+			lastPingResponse = msg;
+			lastAddrResponse = packet.getAddress();
 			if (0 != msg.compareTo(PING_RESP_EXPECTED))
 				return;
 			lastSuccess = Calendar.getInstance().getTimeInMillis();
@@ -127,6 +133,24 @@ public class NetworkService {
 		}
 	}
 	
+	public String getLastPingResponse() {
+		return lastPingResponse;
+	}
+	
+	public String getExpectedPingResponse() {
+		return PING_RESP_EXPECTED;
+	}
+	
+	public String getLastAddrResponse() {
+		if (lastAddrResponse == null)
+			return null;
+		return lastAddrResponse.getHostAddress();
+	}
+	
+	public int getTotalPings() {
+		return totalPingsSent;
+	}
+	
 	public void cleanup() {
 		if (listener != null)
 			listener.kill();
@@ -138,6 +162,7 @@ public class NetworkService {
 	
 	/* two possible addresses for ping request */
 	private void sendPing(InetAddress addr) {
+		++totalPingsSent;
 		scheduledTimer.schedule(timeoutTask, MILLIS_BEFORE_PING_RETRY, TimeUnit.MILLISECONDS);
 		new SendThread(pingBuffer.toArray(), pingBuffer.length(), addr, SERVER_PORT).start();
 	}
