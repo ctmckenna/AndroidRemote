@@ -2,6 +2,7 @@ package com.foggyciti.macremote;
 
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 import android.app.Activity;
@@ -19,6 +20,7 @@ public class DebugRemoteControlActivity extends Activity {
 	private List<KeyValue> elements = null;
 	private NetworkService networkService;
 	private Connection connectionStatus = Connection.PENDING;
+	long millis = Calendar.getInstance().getTimeInMillis();
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -33,9 +35,6 @@ public class DebugRemoteControlActivity extends Activity {
 								 new KeyValue(R.string.connection_status, R.string.pendingConnection, Color.YELLOW));
 		
 		buildLayout();
-        networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
-		networkService.findLanServerAddr();
-		
 		timeoutRun = new Runnable() {
 			@Override
 			public void run() {
@@ -43,6 +42,18 @@ public class DebugRemoteControlActivity extends Activity {
 			}
 		};
 		timeoutHandler.postDelayed(timeoutRun, 250);
+	}
+	
+	public void onPause() {
+		super.onPause();
+		networkService.cleanup();
+		networkService = null;
+	}
+	
+	public void onResume() {
+		super.onResume();
+		networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
+		networkService.findLanServerAddr();
 	}
 	
 	private	class Connect implements Callback {
@@ -159,5 +170,9 @@ public class DebugRemoteControlActivity extends Activity {
 		}
 		} catch (Exception ex) {}
 		timeoutHandler.postDelayed(timeoutRun, 250);
+		
+		long now = Calendar.getInstance().getTimeInMillis();
+		millis = now;
+		
 	}
 }

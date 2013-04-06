@@ -4,18 +4,13 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
 import java.net.UnknownHostException;
-import java.util.Calendar;
-import java.util.Enumeration;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
 
 public class NetworkService {
 	private InetAddress connectedServerAddr = null;
@@ -24,23 +19,21 @@ public class NetworkService {
 	private Callback onPending;
 	private Activity activity;
 	private DatagramBuffer pingBuffer = new DatagramBuffer();
-
 	
 	private static final int MILLIS_BEFORE_PING = 3000;
 	private static final int MILLIS_BEFORE_PING_RETRY = 500;
-	private static final int CONNECT_TO_PENDING_UNACK = 5;
-	private static final int PENDING_TO_DISCONNECT_UNACK = 10;
+	private static final int CONNECT_TO_PENDING_UNACK = 2;
+	private static final int PENDING_TO_DISCONNECT_UNACK = 8;
 	
 	private static final int SERVER_PORT = 10265;
 	
 	private static final String PING_RESP_EXPECTED = ":-)";
 	
-	private static long lastSuccess = 0;
+	private static long currentPingInterval = MILLIS_BEFORE_PING_RETRY;
 	
 	private DatagramListener listener = null;
 	
-	private ScheduledThreadPoolExecutor scheduledTimer = new ScheduledThreadPoolExecutor(1);
-	private PingTimeout timeoutTask = new PingTimeout();
+	private Handler timeoutHandler = new Handler();
 	
 	private PingRetryRunnable pingRetry = new PingRetryRunnable();
 	
@@ -48,7 +41,7 @@ public class NetworkService {
 	private InetAddress lastAddrResponse = null;
 	private int totalPingsSent = 0;
 	
-	private int unackPings = 0;
+	private int pendingPings = 0;
 	
 	public NetworkService(Activity activity, String pingRequest, Callback onConnect, Callback onDisconnect, Callback onPending) {
 		this.onConnect = onConnect;
@@ -63,14 +56,13 @@ public class NetworkService {
 	
 	private class PingRetryRunnable implements Runnable {
 		public void run() {
-			if (Calendar.getInstance().getTimeInMillis()-lastSuccess < MILLIS_BEFORE_PING)
-				return;
-			++unackPings;
-			if (unackPings == PENDING_TO_DISCONNECT_UNACK) {
+			if (pendingPings == PENDING_TO_DISCONNECT_UNACK) {
 				connectedServerAddr = null;
+				currentPingInterval = MILLIS_BEFORE_PING_RETRY;
 				onDisconnect.callback();
-			} else if (unackPings == CONNECT_TO_PENDING_UNACK) {
+			} else if (pendingPings == CONNECT_TO_PENDING_UNACK) {
 				onPending.callback();
+				currentPingInterval = MILLIS_BEFORE_PING_RETRY;
 			}
 			try {
 				InetAddress pingAddr;
@@ -93,20 +85,12 @@ public class NetworkService {
 			lastAddrResponse = packet.getAddress();
 			if (0 != msg.compareTo(PING_RESP_EXPECTED))
 				return;
-			lastSuccess = Calendar.getInstance().getTimeInMillis();
-			scheduledTimer.remove(timeoutTask);
-			scheduledTimer.schedule(timeoutTask, MILLIS_BEFORE_PING, TimeUnit.MILLISECONDS);
-			unackPings = 0;
+			pendingPings = 0;
+			currentPingInterval = MILLIS_BEFORE_PING;
 			if (connectedServerAddr == null)
 				connectedServerAddr = packet.getAddress();
 				
 			onConnect.callback();
-		}
-	}
-		
-	private class PingTimeout implements Runnable {
-		public void run() {
-			activity.runOnUiThread(pingRetry);
 		}
 	}
 	
@@ -154,6 +138,7 @@ public class NetworkService {
 	public void cleanup() {
 		if (listener != null)
 			listener.kill();
+		timeoutHandler = null;
 	}
 	
 	public void send(DatagramBuffer sendBuffer) {
@@ -162,8 +147,11 @@ public class NetworkService {
 	
 	/* two possible addresses for ping request */
 	private void sendPing(InetAddress addr) {
+		++pendingPings;
 		++totalPingsSent;
-		scheduledTimer.schedule(timeoutTask, MILLIS_BEFORE_PING_RETRY, TimeUnit.MILLISECONDS);
+		if (timeoutHandler != null)
+			timeoutHandler.postDelayed(pingRetry, currentPingInterval);
+		//scheduledTimer.schedule(timeoutTask, currentPingInterval, TimeUnit.MILLISECONDS);
 		new SendThread(pingBuffer.toArray(), pingBuffer.length(), addr, SERVER_PORT).start();
 	}
 	

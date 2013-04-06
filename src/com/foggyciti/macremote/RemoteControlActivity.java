@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.widget.LinearLayout;
 
 public class RemoteControlActivity extends Activity {
-	static int listenPort = 4023;
 	static int serverPort = 4023;
 	static final String pingResponse = ":-)";
 	private NetworkService networkService = null;
@@ -30,17 +29,20 @@ public class RemoteControlActivity extends Activity {
         v.setLayoutParams(params);
         ll.addView(v);
         //trackpadView = v;
-        
-        if (networkService == null) {
-          networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
-          networkService.findLanServerAddr();
-        }
     }
     
     @Override
-    public void onDestroy() {
-    	super.onDestroy();
+    public void onResume() {
+    	super.onResume();
+    	networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
+        networkService.findLanServerAddr();
+    }
+    
+    @Override
+    public void onPause() {
+    	super.onPause();
     	networkService.cleanup();
+    	networkService = null;
     }
     
     private class Connect implements Callback {

@@ -20,7 +20,8 @@ public class DatagramListener extends Thread {
 	}
 	
 	public void kill() {
-		dg.close();
+		if (dg != null)
+			dg.close();
 	}
 	
 	public void run() {
