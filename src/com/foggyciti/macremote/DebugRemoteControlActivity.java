@@ -27,7 +27,8 @@ public class DebugRemoteControlActivity extends Activity {
 		setContentView(R.layout.debug_remote);
 		
 		elements = Arrays.asList(new KeyValue(R.string.pings_sent, R.string.NA),
-								 new KeyValue(R.string.broadcast_address, R.string.NA),
+								 new KeyValue(R.string.gingerbread_broadcast_address, R.string.NA),
+								 new KeyValue(R.string.froyo_broadcast_address, R.string.NA),
 								 new KeyValue(R.string.netmask, R.string.NA),
 								 new KeyValue(R.string.received_ping, R.string.NA),
 								 new KeyValue(R.string.expected_ping, R.string.NA),
@@ -131,8 +132,14 @@ public class DebugRemoteControlActivity extends Activity {
 		for (KeyValue kv : elements) {
 			TextView tv = (TextView)findViewById(kv.hashCode());
 			
-			if (kv.keyId == R.string.broadcast_address) {
-				tv.setText(BroadcastHandler.getInstance(this).getBroadcastAddress().getHostAddress());
+			if (kv.keyId == R.string.gingerbread_broadcast_address) {
+				BroadcastHandler handler = BroadcastHandler.getGingerbreadInstance(this);
+				if (handler != null)
+					tv.setText(handler.getBroadcastAddress().getHostAddress());
+			} else if (kv.keyId == R.string.froyo_broadcast_address) {
+				BroadcastHandler handler = BroadcastHandler.getFroyoInstance(this);
+				if (handler != null)
+					tv.setText(handler.getBroadcastAddress().getHostAddress());
 			} else if (kv.keyId == R.string.netmask) {
 				tv.setText(InetAddress.getByAddress(NetworkService.getNetmask(this)).getHostAddress());
 			} else if (kv.keyId == R.string.received_ping) {

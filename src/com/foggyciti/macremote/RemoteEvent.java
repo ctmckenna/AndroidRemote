@@ -5,7 +5,8 @@ public enum RemoteEvent {
 	MOVE,
 	DRAG,
 	UP,
-	PING;
+	PING,
+	VOLUME;
 	
 	public byte getId() {
 		return (byte)(ordinal()+1);

@@ -23,7 +23,7 @@ public class RCView extends View {
 	private static TouchState state = TouchState.empty;
 	
 	private long delayForClick = 250;
-	private static long delayBeforeDrag = 1200;        // milliseconds before hold turns to drag
+	private static long delayBeforeDrag = 900;        // milliseconds before hold turns to drag
 	
 	/* distance measurements set in constructor since they're converted from dpi to pixels */
 	private double clickRadius;

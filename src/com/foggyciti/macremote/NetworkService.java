@@ -51,7 +51,6 @@ public class NetworkService {
 		pingBuffer.reset();
 		pingBuffer.copyByte(RemoteEvent.PING.getId());
 		pingBuffer.copyData(pingRequest.getBytes());
-
 	}
 	
 	private class PingRetryRunnable implements Runnable {

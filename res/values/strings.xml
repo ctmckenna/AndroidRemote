@@ -25,7 +25,8 @@
 	<!-- Debug remote layout strings (should not be translated) -->
 	<string name="becomeSuperUserMsg">Welcome!\nYou\'ve just unlocked MacRemote. Happy Debugging!</string>
 	<string name="exitSuperUserMsg">You\'ve just left the unlocked version.\nHope you found your bug!</string>
-	<string name="broadcast_address">broadcast addr: </string>
+	<string name="gingerbread_broadcast_address">gingerbread broadcast addr: </string>
+	<string name="froyo_broadcast_address">froyo broadcast addr: </string>
 	<string name="netmask">netmask: </string>
 	<string name="received_ping">last ping: </string>
 	<string name="expected_ping">expected ping: </string>

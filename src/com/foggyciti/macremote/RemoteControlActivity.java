@@ -3,7 +3,14 @@ package com.foggyciti.macremote;
 import java.util.Calendar;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.view.KeyEvent;
 import android.widget.LinearLayout;
 
 public class RemoteControlActivity extends Activity {
@@ -17,10 +24,10 @@ public class RemoteControlActivity extends Activity {
 	/* data for batched movement */
 	private long lastSendTime = Calendar.getInstance().getTimeInMillis();
 	private static final long COLLECTION_TIME = 25; // in millis
-	
+		
     /** Called when the activity is first created. */
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
         setContentView(R.layout.main);
         LinearLayout ll = (LinearLayout)findViewById(R.id.layout);
@@ -28,21 +35,35 @@ public class RemoteControlActivity extends Activity {
         RCView v = new RCView(this);
         v.setLayoutParams(params);
         ll.addView(v);
-        //trackpadView = v;
+        
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
     
     @Override
-    public void onResume() {
-    	super.onResume();
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+    	if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+			sendEvent(RemoteEvent.VOLUME, 6);
+			return true;
+		}
+    	if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+			sendEvent(RemoteEvent.VOLUME, -6);
+			return true;
+		}
+    	return super.onKeyDown(keyCode, event);
+    }
+    
+    @Override
+    protected void onStart() {
+    	super.onStart();
     	networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
-        networkService.findLanServerAddr();
+    	networkService.findLanServerAddr();
     }
     
     @Override
-    public void onPause() {
-    	super.onPause();
+    protected void onStop() {
+    	super.onStop();
     	networkService.cleanup();
-    	networkService = null;
+        networkService = null;
     }
     
     private class Connect implements Callback {
@@ -73,6 +94,17 @@ public class RemoteControlActivity extends Activity {
 		networkService.send(sendBuffer);
 	}
 	
+	public void sendEvent(RemoteEvent ev, int i) {
+		if (connectionStatus != Connection.CONNECTED)
+			return;
+		long now = Calendar.getInstance().getTimeInMillis();
+		sendBuffer.reset();
+		sendBuffer.copyByte(ev.getId());
+		sendBuffer.copyInt(i);
+		sendBuffer.copyInt((int)now);
+		networkService.send(sendBuffer);
+	}
+	
 	public void sendEvent(float x, float y, RemoteEvent ev) {
 		if (connectionStatus != Connection.CONNECTED)
 			return;
@@ -98,5 +130,15 @@ public class RemoteControlActivity extends Activity {
 		sendBuffer.copyFloat(PixelUtil.dp(this, y));
 		sendBuffer.copyInt((int)now);
 		networkService.send(sendBuffer);
+	}
+	
+	private class VolumeReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context c, Intent intent) {
+			KeyEvent ke = (KeyEvent)intent.getExtras().get(Intent.EXTRA_KEY_EVENT);
+			
+			
+		}
 	}
 }
