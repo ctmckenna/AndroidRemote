@@ -64,6 +64,7 @@ public class RemoteControlActivity extends Activity {
     	super.onStop();
     	networkService.cleanup();
         networkService = null;
+        connectionStatus = Connection.PENDING;
     }
     
     private class Connect implements Callback {

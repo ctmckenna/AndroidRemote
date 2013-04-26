@@ -31,6 +31,7 @@ public class RCView extends View {
 	
 	private Delta delta = new Delta();
 	private Delta tempDelta = new Delta();
+	
 	private Vector<Point> downPoints = new Vector<Point>();
 	
 	private Bitmap mainBitmap = null;
@@ -44,8 +45,7 @@ public class RCView extends View {
 	
 	private Drawable pointGradient = null;
 	private float pointWidth;
-	private float pointHeight;
-	
+	private float pointHeight;	
 	
 	private RefreshHandler refreshHandler = new RefreshHandler(this);
 
@@ -57,10 +57,6 @@ public class RCView extends View {
 	}
 	
 	
-	/* Math.pow is slow due to having power of type double - this impl is faster */
-	private double square(double n) {
-		return n * n;
-	}
 
 	/* finds the point that was removed from the gesture, and removes
 	 * it from the vector of points.
@@ -82,34 +78,23 @@ public class RCView extends View {
 		return null;
 	}	
 	
-	double getDistance(Delta delta) {
-		return Math.sqrt(square(delta.x) + square(delta.y));
-	}
-	
-	/* finds and returns the point that moved the most. it also updates the curX and curY,
-	 * for the list of points
-	 */
-	Delta findMovingPointDelta(Vector<Point> points, MotionEvent event) {
-		double maxDist = -1;
-		Delta d = tempDelta;
+	private void adjustDownPoints(MotionEvent event, Vector<Point> points) {
 		for (int e_i = 0; e_i < event.getPointerCount(); ++e_i) {
 			for (int p_i = 0; p_i < points.size(); ++p_i) {
-				if (points.get(p_i).id == event.getPointerId(e_i)) {
-					getDelta(points.get(p_i), event.getX(e_i), event.getY(e_i), delta);
-					double dist = getDistance(delta);
-					if (dist > maxDist) {
-						maxDist = dist;
-						tempDelta.x = delta.x;
-						tempDelta.y = delta.y;
-					}
+				Point p = points.get(p_i);
+				if (p.id == event.getPointerId(e_i)) {
+					p.lastX = p.curX;
+					p.lastY = p.curY;
+					p.curX = event.getX(e_i);
+					p.curY = event.getY(e_i);
 				}
+				
 			}
 		}
-		return d;
 	}
 
 	/* finds and returns the id of the point added to event */
-	int getNewPointId(Vector<Point> points, MotionEvent event) {
+	Point getNewPoint(Vector<Point> points, MotionEvent event) {
 		boolean found;
 		for (int e_i = 0; e_i < event.getPointerCount(); ++e_i) {
 			found = false;
@@ -119,17 +104,12 @@ public class RCView extends View {
 				}
 			}
 			if (!found) {
-				return event.getPointerId(e_i);
+				int id = event.getPointerId(e_i);
+				int idx = event.findPointerIndex(id);
+				return new Point(event.getX(idx), event.getY(idx), id);
 			}
 		}
-		return Integer.MAX_VALUE;
-	}
-	
-	private void getDelta(Point pt, float x, float y, Delta d) {
-		d.x = x - pt.curX;
-		d.y = y - pt.curY;
-		pt.curX = x;
-		pt.curY = y;
+		return null;
 	}
 	
 	private long downTime;
@@ -139,19 +119,20 @@ public class RCView extends View {
 	 * so there's an issue where (given two pointers) you lift one up and move it elsewhere, android
 	 * will only send events while it's down and we miss that the pointer is off the screen
 	 */
-	private void correctDownPoints(MotionEvent event, Vector<Point> downPoints, long currentTimeInMillis) {
+	private void correctDownPoints(MotionEvent event, Vector<Point> downPoints) {
 		long acceptedMillisBetweenEvents = 200;
 		double acceptedPixelsBetweenEvents = PixelUtil.px(activity, 20f);
+		long currentTime = Calendar.getInstance().getTimeInMillis();
 		//if we haven't received an event in some time, and one of the pointers moved beyond acceptedPixelsBetweenEvents, 
 		//we assume it's been lifted and placed back down so we remove that downPoint to pretend like we noticed it was lifted
-		if (state == TouchState.dragging_2 && downPoints.size() == event.getPointerCount() && currentTimeInMillis - lastTouchEvent > acceptedMillisBetweenEvents) {
+		if (state == TouchState.dragging_2 && downPoints.size() == event.getPointerCount() && currentTime - lastTouchEvent > acceptedMillisBetweenEvents) {
 			for (int j = 0; j < downPoints.size(); ++j) {
 				Point point = downPoints.get(j);
 				for (int i = 0; i < event.getPointerCount(); ++i) {
 					if (point.id == event.getPointerId(i)) {
 						tempDelta.x = point.curX - event.getX(i);
 						tempDelta.y = point.curY - event.getY(i);
-						if (getDistance(tempDelta) > acceptedPixelsBetweenEvents) {
+						if (MathUtil.distance(tempDelta) > acceptedPixelsBetweenEvents) {
 							downPoints.remove(j);
 							correctState(downPoints.size());
 						}
@@ -159,6 +140,7 @@ public class RCView extends View {
 				}
 			}
 		}
+		lastTouchEvent = currentTime;
 	}
 	
 	private void correctState(int numPointers) {
@@ -167,6 +149,9 @@ public class RCView extends View {
 			if (numPointers == 1)
 				state = TouchState.dragging_1;
 			break;
+		case scrolling:
+			if (numPointers == 1)
+				state = TouchState.moving;
 		default:
 			break;
 		}
@@ -177,20 +162,15 @@ public class RCView extends View {
 	}
 	
 	public boolean onTouchEvent(MotionEvent event) {
-		Point downPt;
 		Point upPt;
-		long currentTime = Calendar.getInstance().getTimeInMillis();
-		correctDownPoints(event, downPoints, currentTime);
-		lastTouchEvent = currentTime;
+		correctDownPoints(event, downPoints);
+		adjustDownPoints(event, downPoints);
 		switch(actionMasked(event.getAction())) {
 		case MotionEvent.ACTION_DOWN:
 			downTime = Calendar.getInstance().getTimeInMillis();
 			/* just starts a new gesture - all state switches needs to be handled in ACTION_MOVE */
 			state = TouchState.holding;
-			int pointId = getNewPointId(downPoints, event);
-			downPt = new Point(event.getX(), event.getY(), pointId);
-			downPoints.add(downPt);
-			TouchState.holder = pointId;
+			downPoints.add(getNewPoint(downPoints, event));
 			return true;
 		case MotionEvent.ACTION_UP:
 			//System.out.println("up event: " + event.getPointerCount() + " pts");
@@ -201,7 +181,7 @@ public class RCView extends View {
 				TouchState.holder = Integer.MAX_VALUE;
 				upPt = downPoints.get(0);
 				long elapse = event.getEventTime() - event.getDownTime();
-				double dist = Math.sqrt(square(event.getY() - upPt.origY) + square(event.getX() - upPt.origX));
+				double dist = Math.sqrt(MathUtil.square(event.getY() - upPt.origY) + MathUtil.square(event.getX() - upPt.origX));
 				//System.out.println("click dist: " + dist + "lim: " + clickRadius);
 				if (dist > clickRadius || elapse > delayForClick)
 					break;
@@ -211,6 +191,10 @@ public class RCView extends View {
 				state = TouchState.empty;
 				TouchState.holder = Integer.MAX_VALUE;
 				activity.sendEvent(RemoteEvent.UP);
+				break;
+			case scrolling:
+				state = TouchState.empty;
+				TouchState.holder = Integer.MAX_VALUE;
 				break;
 			case moving:
 				state = TouchState.empty;
@@ -252,15 +236,11 @@ public class RCView extends View {
 		switch(event.getPointerCount()) {
 		case 1:
 			pt = downPoints.get(0);
-			getDelta(pt, event.getX(), event.getY(), delta);
-			activity.sendEvent(delta.x, delta.y, RemoteEvent.DRAG);
+			activity.sendEvent(pt.curX - pt.lastX, pt.curY - pt.lastY, RemoteEvent.DRAG);
 			break;
 		case 2:
 			state = TouchState.dragging_2;
-			int id = getNewPointId(downPoints, event);
-			int idx = event.findPointerIndex(id);
-			pt = new Point(event.getX(idx), event.getY(idx), id);
-			downPoints.add(pt);
+			downPoints.add(getNewPoint(downPoints, event));
 			break;
 		}
 	}
@@ -280,25 +260,44 @@ public class RCView extends View {
 			}
 			break;
 		case 2:
-			Delta d = findMovingPointDelta(downPoints, event);
-			activity.sendEvent(d.x, d.y, RemoteEvent.DRAG);
+			Point.maxDelta(downPoints, delta);
+			activity.sendEvent(delta.x, delta.y, RemoteEvent.DRAG);
 			break;
 		}
 	}
+	
+	/* to be implemented */
+	private void handle_scrolling(MotionEvent event) {
+		switch (event.getPointerCount()) {
+		case 1:
+			removePt(downPoints, event);
+			state = TouchState.moving;
+			break;
+		case 2:
+			double angle = MathUtil.angle(downPoints.get(0).getUnitVector(), downPoints.get(1).getUnitVector());
+			
+			if (angle >= 90)
+				break;
+			PointVector avg = downPoints.get(0).getVector().average(downPoints.get(1).getVector());
+			angle = MathUtil.angleFromHorizon(avg);
+			if (angle < 45)
+				activity.sendEvent(avg.getX(), 0, RemoteEvent.SCROLL);
+			else
+				activity.sendEvent(0, avg.getY(), RemoteEvent.SCROLL);
+			break;
+		}
+	}
+	
 	private void handle_moving(MotionEvent event) {
 		Point pt;
 		switch(event.getPointerCount()) {
 		case 1:
 			pt = downPoints.get(0);
-			getDelta(pt, event.getX(), event.getY(), delta);
-			activity.sendEvent(delta.x, delta.y, RemoteEvent.MOVE);
+			activity.sendEvent(pt.curX - pt.lastX, pt.curY - pt.lastY, RemoteEvent.MOVE);
 			break;
 		case 2:
 			state = TouchState.scrolling;
-			int id = getNewPointId(downPoints, event);
-			int idx = event.findPointerIndex(id);
-			pt = new Point(event.getX(idx), event.getY(idx), id);
-			downPoints.add(pt);
+			downPoints.add(getNewPoint(downPoints, event));
 			break;
 		}
 	}
@@ -315,14 +314,13 @@ public class RCView extends View {
 		switch(event.getPointerCount()) {
 		case 1:
 			pt = downPoints.get(0);
-			getDelta(pt, event.getX(), event.getY(), delta);
 			long elapse = event.getEventTime() - event.getDownTime();
-			double dist = Math.sqrt(square(pt.curY - pt.origY) + square(pt.curX - pt.origX));
+			double dist = Math.sqrt(MathUtil.square(pt.curY - pt.origY) + MathUtil.square(pt.curX - pt.origX));
 			//System.out.println("elapse: " + elapse + " drag dist: " + dist);
 			if (dist > holdingRadius) {
 				state = TouchState.moving;
 				TouchState.holder = Integer.MAX_VALUE;
-				activity.sendEvent(delta.x, delta.y, RemoteEvent.MOVE);
+				activity.sendEvent(pt.curX - pt.lastX, pt.curY - pt.lastY, RemoteEvent.MOVE);
 			} else if (elapse > delayBeforeDrag) {
 				set_state_dragging_1();
 			} else {
@@ -332,22 +330,7 @@ public class RCView extends View {
 		case 2:
 			state = TouchState.scrolling;
 			TouchState.holder = Integer.MAX_VALUE;
-			int id = getNewPointId(downPoints, event);
-			int idx = event.findPointerIndex(id);
-			pt = new Point(event.getX(idx), event.getY(idx), id);
-			downPoints.add(pt);
-			break;
-		}
-	}
-	/* to be implemented */
-	private void handle_scrolling(MotionEvent event) {
-		switch (event.getPointerCount()) {
-		case 1:
-			removePt(downPoints, event);
-			state = TouchState.moving;
-			break;
-		case 2:
-			/* not yet implemented */
+			downPoints.add(getNewPoint(downPoints, event));
 			break;
 		}
 	}
