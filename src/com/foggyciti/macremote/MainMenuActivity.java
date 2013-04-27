@@ -1,5 +1,7 @@
 package com.foggyciti.macremote;
 
+import com.google.analytics.tracking.android.EasyTracker;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -29,6 +31,18 @@ public class MainMenuActivity extends Activity {
 			startPasscodeInitialization();
 		else
 			startMainMenu();
+	}
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+		EasyTracker.getInstance().activityStart(this);
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		EasyTracker.getInstance().activityStop(this);
 	}
 	
 	private WifiManager getWifiManager() {

@@ -1,5 +1,7 @@
 package com.foggyciti.macremote;
 
+import com.google.analytics.tracking.android.EasyTracker;
+
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -26,6 +28,18 @@ public class SettingsActivity extends PreferenceActivity {
 				return false;
 			}
 		});
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		EasyTracker.getInstance().activityStop(this);
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		EasyTracker.getInstance().activityStop(this);
 	}
 	
 	private class PreferenceTextWatcher implements TextWatcher {
@@ -55,6 +69,7 @@ public class SettingsActivity extends PreferenceActivity {
 				combination = "";
 			}
 		}
+		
 
 		@Override
 		public void afterTextChanged(Editable s) {}

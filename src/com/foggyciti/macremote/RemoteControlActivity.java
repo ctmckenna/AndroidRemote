@@ -2,6 +2,9 @@ package com.foggyciti.macremote;
 
 import java.util.Calendar;
 
+import com.google.analytics.tracking.android.EasyTracker;
+import com.google.analytics.tracking.android.Tracker;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -29,6 +32,8 @@ public class RemoteControlActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
+        EasyTracker.getInstance().setContext(this);
+        
         setContentView(R.layout.main);
         LinearLayout ll = (LinearLayout)findViewById(R.id.layout);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT);
@@ -57,6 +62,7 @@ public class RemoteControlActivity extends Activity {
     	super.onStart();
     	networkService = new NetworkService(this, PersistenceHandler.getPasscode(this), new Connect(), new Disconnect(), new Pending());
     	networkService.findLanServerAddr();
+    	EasyTracker.getInstance().activityStart(this);
     }
     
     @Override
@@ -65,16 +71,19 @@ public class RemoteControlActivity extends Activity {
     	networkService.cleanup();
         networkService = null;
         connectionStatus = Connection.PENDING;
+        EasyTracker.getInstance().activityStop(this);
     }
     
     private class Connect implements Callback {
     	public void callback() {
     		connectionStatus = Connection.CONNECTED;
+    		Analytics.sendConnected();
     	}
     }
     private class Disconnect implements Callback {
     	public void callback() {
     		connectionStatus = Connection.DISCONNECTED;
+    		Analytics.sendDisconnected();
     	}
     }
     private class Pending implements Callback {
@@ -104,6 +113,7 @@ public class RemoteControlActivity extends Activity {
 		sendBuffer.copyInt(i);
 		sendBuffer.copyInt((int)now);
 		networkService.send(sendBuffer);
+		Analytics.remoteControlEvent(ev);
 	}
 	
 	public void sendEvent(float x, float y, RemoteEvent ev) {
@@ -131,15 +141,6 @@ public class RemoteControlActivity extends Activity {
 		sendBuffer.copyFloat(PixelUtil.dp(this, y));
 		sendBuffer.copyInt((int)now);
 		networkService.send(sendBuffer);
-	}
-	
-	private class VolumeReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context c, Intent intent) {
-			KeyEvent ke = (KeyEvent)intent.getExtras().get(Intent.EXTRA_KEY_EVENT);
-			
-			
-		}
+		Analytics.remoteControlEvent(ev);
 	}
 }
