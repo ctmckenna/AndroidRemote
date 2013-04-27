@@ -16,5 +16,21 @@
     <style name="AppTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
-
+    
+    <style name="CustomTheme" parent="@android:style/Theme">
+        <item name="android:windowTitleSize">40dp</item>
+        <item name="android:windowTitleBackgroundStyle">@android:color/black</item>
+    </style>
+    
+    <style name="titleTextViewStyle">
+        <item name="android:textStyle">bold</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+    
+    <style name="menuGradientColor">
+        <item name="android:startColor">#AAEEEEEE</item>
+        <item name="android:endColor">#FF09000D</item>
+    </style>
 </resources>

@@ -1,37 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    		  xmlns:ads="http://schemas.android.com/apk/lib/com.google.ads"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:background="@drawable/main_menu_background"
               android:orientation="vertical" >
-	<TextView android:layout_width="wrap_content"
-           	  android:layout_height="wrap_content"
-              android:layout_gravity="center_horizontal"
-              android:clickable="false"
-           	  android:gravity="bottom|center_horizontal"
-              android:text="@string/app_name"
-              android:textStyle="bold"
-          	  android:typeface="serif"
-          	  android:textSize="40sp"
-          	  android:layout_weight="2.5" />
-	<LinearLayout android:layout_width="wrap_content"
-	    		  android:layout_height="wrap_content"
-	    		  android:layout_weight="10" />
-   	<LinearLayout android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:orientation="horizontal"
-                  android:layout_weight="73.5">
-    	<ImageButton android:src="@drawable/settings_btn"
-                     android:contentDescription="@string/settings_btn_cd"
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:background="#00000000"
-                     android:onClick="onSettingsButtonClick" />
-    	<ImageButton android:src="@drawable/remote_control_btn"
-    	             android:contentDescription="@string/remote_btn_cd"
-    	             android:layout_height="wrap_content"
-    	             android:layout_width="wrap_content"
-    	             android:background="#00000000"
-    	             android:onClick="onRemoteButtonClick" />
-  	</LinearLayout>
+
+    <View android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@drawable/menu_linear_gradient"/>
+	<LinearLayout android:layout_width="match_parent"
+	    		  android:layout_height="0dp"
+	    		  android:layout_weight="5" />
+
+	<LinearLayout android:layout_width="match_parent"
+	    android:layout_height="0dp"
+	    android:orientation="horizontal"
+	    android:layout_weight="95">
+	    
+	    <LinearLayout android:layout_width="0px"
+	        android:layout_height="match_parent"
+	        android:layout_weight="5"/>
+	    
+	    <LinearLayout android:layout_width="0px"
+	        android:layout_height="match_parent"
+	        android:orientation="vertical"
+	        android:layout_weight="90">
+	        
+	        <RelativeLayout android:layout_width="match_parent"
+	            android:layout_height="0dp"
+	            android:layout_weight="50">
+	            
+	            <ImageButton android:src="@drawable/remote_button"
+	                android:id="@+id/remote_button" 
+	    			android:layout_width="match_parent"
+	    			android:layout_height="match_parent"
+	    			android:contentDescription="@string/remote_btn_cd"
+	    			android:onClick="onRemoteButtonClick"
+	    			android:scaleType="fitXY"
+	    			android:background="#00000000"/>
+	            
+	            <LinearLayout android:layout_width="wrap_content"
+	                android:layout_height="wrap_content"
+	                android:layout_centerInParent="true"
+	                android:orientation="vertical">
+	                
+	            	<TextView style="@style/titleTextViewStyle"
+	                	android:text="@string/remote"
+	                	android:textSize="50sp"
+	                	android:gravity="bottom"
+	           	     	android:layout_gravity="center_horizontal"/>
+	            	
+	            	<TextView android:layout_width="wrap_content"
+	                	android:layout_height="wrap_content"
+	               		android:layout_gravity="center_horizontal"
+	                	android:gravity="bottom|center_horizontal"
+	                	android:typeface="sans"
+	                	android:textStyle="italic|normal"
+	                	android:textSize="20sp"
+	                	android:text="@string/click_here"/>
+	            </LinearLayout>
+	            
+	        </RelativeLayout>
+	        <LinearLayout android:layout_width="match_parent"
+	            android:layout_height="0dp"
+	            android:layout_weight="50"
+	            android:orientation="vertical">
+	            <LinearLayout android:layout_width="match_parent"
+	            	android:layout_height="0dp"
+	            	android:layout_weight="20"/>
+	        
+	       	   <!-- <com.google.ads.AdView android:id="@+id/adView"
+	            	android:layout_width="match_parent"
+	            	android:layout_height="wrap_content"
+	            	ads:adUnitId="a1517c762109729"
+	            	ads:testDevices="353092058316720"
+	            	ads:adSize="BANNER"
+	            	ads:loadAdOnCreate="true"/>
+	        	<com.google.ads.AdView android:id="@+id/adView"
+	            	android:layout_width="match_parent"
+	            	android:layout_height="wrap_content"
+	            	ads:adUnitId="a1517c762109729"
+	            	ads:testDevices="353092058316720"
+	            	ads:adSize="BANNER"
+	            	ads:loadAdOnCreate="true"/>
+	        	<com.google.ads.AdView android:id="@+id/adView"
+	            	android:layout_width="match_parent"
+	            	android:layout_height="wrap_content"
+	            	ads:adUnitId="a1517c762109729"
+	            	ads:testDevices="353092058316720"
+	            	ads:adSize="BANNER"
+	            	ads:loadAdOnCreate="true"/> --> 
+	        	<LinearLayout android:layout_width="match_parent"
+	            	android:layout_height="0dp"
+	            	android:layout_weight="20"/>
+	        </LinearLayout>
+	        
+	    </LinearLayout>
+		
+		<LinearLayout android:layout_width="0px"
+		    android:layout_height="match_parent"
+		    android:layout_weight="5"/>
+	</LinearLayout>
 </LinearLayout>

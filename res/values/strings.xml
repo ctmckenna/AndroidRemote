@@ -2,6 +2,8 @@
 <resources>
 
     <string name="app_name">MacRemote</string>
+    <string name="remote">Remote</string>
+    <string name="click_here">Touch Here</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
 	<string name="wifi_not_connected_msg">Wifi is not connected.  Please connect to wifi network.</string>
@@ -20,6 +22,7 @@
 	<string name="settings_btn_cd">Click to view/edit Settings</string>
     <string name="remote_btn_cd">Click to use Remote</string>
 	<string name="push_btn_cd">Click to Continue</string>
+	<string name="title_icon_cd">Return to home</string>
 	
 	
 	<!-- Debug remote layout strings (should not be translated) -->

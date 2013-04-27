@@ -11,8 +11,12 @@ import android.content.pm.ActivityInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -22,11 +26,13 @@ import android.widget.LinearLayout;
 public class MainMenuActivity extends Activity {
 	private static final Integer PASSCODE_LEN = 4;
 	private boolean alertedWifi = false;
+	private ButtonStateManager buttonStateManager;
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		String passcode = PersistenceHandler.getPasscode(this);
+		buttonStateManager = new ButtonStateManager(this);
 		if (null == passcode)
 			startPasscodeInitialization();
 		else
@@ -43,6 +49,24 @@ public class MainMenuActivity extends Activity {
 	protected void onStop() {
 		super.onStop();
 		EasyTracker.getInstance().activityStop(this);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.main, menu);
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+		case R.id.action_settings:
+			goToSettings();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 	
 	private WifiManager getWifiManager() {
@@ -64,23 +88,8 @@ public class MainMenuActivity extends Activity {
 				return false;
 			}
 		});
-		ImageButton continueButton = (ImageButton)findViewById(R.id.continue_button);
-		continueButton.setOnTouchListener(new View.OnTouchListener() {
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				ImageButton b = (ImageButton)v;
-				switch(event.getAction()) {
-				case MotionEvent.ACTION_DOWN:
-					b.setImageDrawable(v.getContext().getResources().getDrawable(R.drawable.pressed));
-					break;
-				case MotionEvent.ACTION_UP:
-					b.setImageDrawable(v.getContext().getResources().getDrawable(R.drawable.hover));
-					break;
-				}
-				return false;
-			}
-			
-		});
+		buttonStateManager.setImageButtonStates(R.id.continue_button, R.drawable.pressed, R.drawable.hover);
+
 		Handler handler = new Handler();
 		handler.postDelayed(new Runnable() {
 			public void run() {
@@ -99,19 +108,22 @@ public class MainMenuActivity extends Activity {
 	}
 	
 	private void startMainMenu() {
+		setTheme(R.style.CustomTheme);
+		requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
 		setContentView(R.layout.main_menu);
-		
+		getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title);
+
 		boolean wifiSet = getWifiManager().setWifiEnabled(true);
 		if (!wifiSet) {
 			displayWifiDialog();
 		}
 	}
-	
+
 	public void openWirelessSettings() {
 		startActivity(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS));
 	}
 	
-	public void onSettingsButtonClick(View v) {
+	public void goToSettings() {
 		Intent intent = new Intent(this, SettingsActivity.class);
 		startActivity(intent);
 	}
@@ -134,6 +146,11 @@ public class MainMenuActivity extends Activity {
 		DialogService.displaySingleOptionDialog(this, R.string.passcode_info_msg, R.string.OK, null);
 	}
 	
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == 2)
+			finish();
+	}
+	
 	public void onContinueButtonClick(View v) {
 		EditText txt = (EditText)findViewById(R.id.passcode);
 		String passcode = txt.getText().toString();
@@ -141,7 +158,10 @@ public class MainMenuActivity extends Activity {
 			displayPasscodeDialog();
 		} else {
 			PersistenceHandler.savePasscode(this, passcode);
-			startMainMenu();
+			
+			Intent intent = new Intent(this, MainMenuActivity.class);
+			startActivityForResult(intent, 2);
+			//startMainMenu();
 		}
 	}
 }

@@ -1,6 +1,8 @@
 package com.foggyciti.macremote;
 
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.analytics.tracking.android.EasyTracker;
 import com.google.analytics.tracking.android.Tracker;
@@ -23,6 +25,7 @@ public class RemoteControlActivity extends Activity {
 	private Delta deltaBuffer = new Delta();
 	DatagramBuffer sendBuffer = new DatagramBuffer();
 	private Connection connectionStatus = Connection.PENDING;
+	private Map<Integer, RCView> views = new HashMap<Integer, RCView>();
 	
 	/* data for batched movement */
 	private long lastSendTime = Calendar.getInstance().getTimeInMillis();
@@ -36,9 +39,15 @@ public class RemoteControlActivity extends Activity {
         
         setContentView(R.layout.main);
         LinearLayout ll = (LinearLayout)findViewById(R.id.layout);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT);
-        RCView v = new RCView(this);
-        v.setLayoutParams(params);
+        
+        int orientation = new Integer(this.getResources().getConfiguration().orientation);
+        RCView v = views.get(orientation);
+        if (v == null) {
+        	LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT);
+        	v = new RCView(this);
+            v.setLayoutParams(params);
+            views.put(orientation, v);
+        }
         ll.addView(v);
         
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -72,6 +81,11 @@ public class RemoteControlActivity extends Activity {
         networkService = null;
         connectionStatus = Connection.PENDING;
         EasyTracker.getInstance().activityStop(this);
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
     }
     
     private class Connect implements Callback {
